@@ -48,7 +48,7 @@ int GetID(char* line, int* index)
     return id;
 }
 
-// gets the number  of cubes and increments the index
+// gets the number of cubes and increments the index
 int GetNumber(char* line, int* index)
 {
     int number = 0;
