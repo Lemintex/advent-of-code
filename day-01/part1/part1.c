@@ -10,7 +10,7 @@ int processLine(char* line)
     {
         if (line[i] >= '0' && line[i] <= '9')
         {
-            if (found == 0)
+            if (!found)
             {
                 start = line[i] - '0';
                 found = 1;
@@ -23,8 +23,8 @@ int processLine(char* line)
 
 int main()
 {
-FILE* input = fopen("../input.txt", "r");
-int sum = 0;
+    FILE* input = fopen("../input.txt", "r");
+    int sum = 0;
 	char line[256];
 	while (fgets(line, sizeof(line), input))
 	{
