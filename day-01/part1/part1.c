@@ -8,6 +8,7 @@ int processLine(char* line)
     int found = 0;
     for (int i = 0; line[i] != '\0'; i++)
     {
+        // check if the current character is a number
         if (line[i] >= '0' && line[i] <= '9')
         {
             if (!found)
@@ -24,8 +25,12 @@ int processLine(char* line)
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
+
     int sum = 0;
+
+    // big char array to hold the line
 	char line[256];
+
 	while (fgets(line, sizeof(line), input))
 	{
         sum += processLine(line);
