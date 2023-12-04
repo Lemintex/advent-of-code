@@ -34,18 +34,30 @@ void CheckMap()
     for (int y = 0; y < MAP_SIZE; y++)
     {
         char* pos = map[y];
+        char* lastPos = map[y+1];
         while (true)
         {
             char* firstDigit = strpbrk(pos, "0123456789");
-            if (firstDigit >= map[MAP_SIZE * y + 1] || firstDigit == NULL)
+            if (firstDigit >= map[y + 1] || firstDigit == NULL)
             {
                 break;
             }
 
             char* lastDigit = firstDigit + strspn(firstDigit, "0123456789");
+            int length = 0;//lastDigit - firstDigit;
+            if (lastDigit >= map[y + 1] || lastDigit == NULL)
+            {
+                lastDigit = map[y + 1] - 1;
+                length = lastDigit - firstDigit;
+                length++;
+            }
+            else
+            {
+                length = lastDigit - firstDigit;
+            }
 
             char number[10] = {0};
-            strncpy(number, firstDigit, lastDigit - firstDigit);
+            strncpy(number, firstDigit, length);
             int n = atoi(number);
             pos = lastDigit;
 
@@ -62,6 +74,10 @@ void CheckMap()
             else
             {
                 //printf("Symbol %d is not touching anything\n", n);
+            }
+            if (lastDigit >= lastPos - 1)
+            {
+                break;
             }
         }
     }
