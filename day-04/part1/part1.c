@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 int cardNumbers[211][10] = {0};
 int winningNumbers[211][25] = {0};
+int numberOfCards[211] = {0};
+
 void ParseLine(char* line, int cardIndex)
 {
     int index = 10; // skip the first 10 characters
@@ -50,10 +53,9 @@ int ReturnGameTotalThatWin()
     int total = 0;
     for (int i = 0; i < 211; i++)
     {
-        bool won = true;
+        int winningPower = 0;
         for (int j = 0; j < 10; j++)
         {
-            bool found = false;
             for (int k = 0; k < 25; k++)
             {
                 int n1 = cardNumbers[i][j];
@@ -61,20 +63,22 @@ int ReturnGameTotalThatWin()
 
                 if (cardNumbers[i][j] == winningNumbers[i][k])
                 {
-                    found = true;
+                    winningPower++;
                     break;
                 }
             }
-            
-            if (!found)
-            {
-                won = false;
-            }
         }
-            if (won)
-            {
-                total += i;
-            }
+        int score = 0;
+        if (winningPower <= 1)
+        {
+            score = winningPower;
+        }
+        else
+        {
+            score = pow(2, winningPower - 1);
+            
+        }
+        total += score;
     }
     printf("total: %d\n", total);
 }
@@ -91,7 +95,6 @@ int main()
     {
         ParseLine(line, i);
         i++;
-        /* code */
     }
    ReturnGameTotalThatWin(); 
 }
