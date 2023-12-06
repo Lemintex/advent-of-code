@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX 2048
 #define MAP_SIZE 140
@@ -44,7 +45,7 @@ void CheckMap()
             }
 
             char* lastDigit = firstDigit + strspn(firstDigit, "0123456789");
-            int length = 0;//lastDigit - firstDigit;
+            int length = 0;
             if (lastDigit >= map[y + 1] || lastDigit == NULL)
             {
                 lastDigit = map[y + 1] - 1;
@@ -64,16 +65,13 @@ void CheckMap()
             if (n == 0) continue;
             int x = firstDigit - map[y];
             bool isTouchingSymbol = false;
-            for (int posX = x; posX < x + (lastDigit - firstDigit); posX++) {
-                isTouchingSymbol |= IsTouchingSymbol(posX, y);
+            for (int posX = x; posX < x + length; posX++) {
+                isTouchingSymbol = IsTouchingSymbol(posX, y);
+                if (isTouchingSymbol) break;
             }
             if (isTouchingSymbol)
             {
                 total += n;
-            }
-            else
-            {
-                //printf("Symbol %d is not touching anything\n", n);
             }
             if (lastDigit >= lastPos - 1)
             {
@@ -88,7 +86,6 @@ int main()
 {
     FILE* input = fopen("../input.txt", "r");
 
-    int total = 0;
     char line[256];
     
     int y = 0;
@@ -97,10 +94,4 @@ int main()
     }
     
     CheckMap();
-
-    printf("%d", total);
 }
-
-// go through each line
-// for each character
-// check if symbol
