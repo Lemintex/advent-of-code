@@ -7,16 +7,17 @@
 #define MAX 2048
 #define MAP_SIZE 140
 int gearX = 0, gearY = 0;
+//can't have 3 gears touching each other
 typedef struct {
     int x;
     int y;
     int parts[2];
-    int gears;
+    int gears;//rename
     bool isValid;
 } gears_t;
 
 char map[MAP_SIZE][MAP_SIZE] = {0};
-gears_t gears[MAX] = {0};
+gears_t gears[MAX];
 int gearsCount = -1;
 
 void AddToNewGear(int n)
@@ -25,27 +26,27 @@ void AddToNewGear(int n)
     gears[gearsCount].x = gearX;
     gears[gearsCount].y = gearY;
     gears[gearsCount].parts[0] = n;
-    gears[gearsCount].gears++;
+    gears[gearsCount].gears = 1;
     gears[gearsCount].isValid = true;
 }
 
-void AddToExistingGearInfo(int n)
+void AddToExistingGearInfo(int n, int index)
 {
-    gears[gearsCount].parts[1] = n;
-    gears[gearsCount].gears++;
+    gears[index].parts[1] = n;
+    gears[index].gears = 2;
 }
 
 void CheckExistingGearInfo(int n)
 {
-    for (int i = 0; i < gearsCount; i++) {
+    for (int i = 0; i <= gearsCount; i++) {
         if (gears[i].x == gearX && gears[i].y == gearY) {
-            if (!gears[i].isValid || gears[i].gears == 2)
+            if (gears[i].gears == 2 && gears[i].isValid)
             {
                 gears[i].isValid = false;
             }
             else
             {
-                AddToExistingGearInfo(n);
+                AddToExistingGearInfo(n, i);
             }
             return;
         }
@@ -73,13 +74,14 @@ bool IsTouchingGear(int x, int y)
 void CalculateGearRatio()
 {
     int total = 0;
-    for (int i = 0; i < gearsCount; i++) {
+    for (int i = 0; i <= gearsCount; i++) {
         if (gears[i].isValid && gears[i].gears == 2) {
             total += gears[i].parts[0] * gears[i].parts[1];
+            printf("%d * %d = %d\n", gears[i].parts[0], gears[i].parts[1], gears[i].parts[0] * gears[i].parts[1]);
         }
     }
-    printf("Total: %d", total);
 }
+
 void CheckMap()
 {
     int total = 0;
@@ -132,7 +134,6 @@ void CheckMap()
         }
     }
     CalculateGearRatio();
-    printf("Total: %d", total);
 }
 
 int main()
