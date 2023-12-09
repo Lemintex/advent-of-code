@@ -23,8 +23,29 @@ typedef struct
     int card;
     int num;
 } hand_type_tracker_t;
+
 hand_t hands[1000] = {0};
 int handCount = 0;
+
+// compare data for sorting
+int compare(const void* a, const void* b)
+{
+    hand_t* handA = (hand_t*)a;
+    hand_t* handB = (hand_t*)b;
+    if (handA->strength != handB->strength)
+    {
+        return handA->strength - handB->strength;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (handA->hand[i] != handB->hand[i])
+        {
+            return handA->hand[i] - handB->hand[i];
+        }
+    }
+    return 0;
+}   
 
 void ScoreCards()
 {
@@ -56,43 +77,53 @@ void ScoreCards()
             }
             
         }
-        int type = 0;
         if (numUnique == 5)
         {
-            type = HIGH_CARD;
+            h.strength = HIGH_CARD;
         }
         else if (numUnique == 4)
         {
-            type = ONE_PAIR;
+            h.strength = ONE_PAIR;
         }
         else if (numUnique == 3)
         {
             if (tracker[0].num == 2 || tracker[1].num == 2 || tracker[2].num == 2)
             {
-                type = TWO_PAIR;
+               h.strength = TWO_PAIR;
             }
             else
             {
-                type = THREE_OF_A_KIND;
+                h.strength = THREE_OF_A_KIND;
             }
         }
         else if (numUnique == 2)
         {
             if (tracker[0].num == 3 || tracker[1].num == 3)
             {
-                type = FULL_HOUSE;
+                h.strength = FULL_HOUSE;
             }
             else
             {
-                type = FOUR_OF_A_KIND;
+                h.strength = FOUR_OF_A_KIND;
             }
         }
         else if (numUnique == 1)
         {
-            type = FIVE_OF_A_KIND;
+            h.strength= FIVE_OF_A_KIND;
         }        
-        printf("Type: %d\n", type);
-   }
+        hands[i] = h;
+        printf("%d\n", h.strength);
+    }
+    qsort(hands, handCount, sizeof(hand_t), compare);
+    int total = 0;
+    for (int i = 0; i < handCount; i++)
+    {
+       printf("%d\n", hands[i].bid);
+       printf("%d %d %d %d %d\n", hands[i].hand[0], hands[i].hand[1], hands[i].hand[2], hands[i].hand[3], hands[i].hand[4]);
+       printf("%d\n", hands[i].strength);
+       total += hands[i].bid * (i+1);
+    }
+    printf("%d\n", total);
 }
 
 int main()
