@@ -7,9 +7,8 @@
 
 int sequence[200][SEQUENCE_LEN];
 int total = 0;
-int previous = 0;
 
-void CalculatePrediction(int n, int* dif)
+int CalculatePrediction(int n, int* dif)
 {
 
     int* differences = (int*)malloc(sizeof(int) * (n+1)); // +1 for 'result' at the end
@@ -18,7 +17,7 @@ void CalculatePrediction(int n, int* dif)
     for (int i = 0; i < n-1; i++)
     {
         differences[i] = dif[i+1] - dif[i];
-        if (differences[i] != 0)
+        if (dif[i] != 0)
         {
             isAllZero = false;
         }
@@ -27,20 +26,16 @@ void CalculatePrediction(int n, int* dif)
     if (isAllZero) 
     {
         free(differences);
-        return;
+        return 0;
     }
     printf("\n");
+    int r = 0;
     if (n > 0)
     {
-        CalculatePrediction(n - 1, differences);
+        r = CalculatePrediction(n - 1, differences) + dif[n-1];
     }
-    previous = dif[n-1] + previous;
     free(differences);
-    if (n == SEQUENCE_LEN)
-    {
-        //printf("result: %d\n", previous);
-        total += previous;
-    }
+    return r;
 }
 
 int main()
@@ -85,7 +80,10 @@ int main()
     
     for (int i = 0; i < 200; i++)
     {
-        CalculatePrediction(SEQUENCE_LEN, sequence[i]);
+        total += CalculatePrediction(SEQUENCE_LEN, sequence[i]);
+        
     }
     printf("Total: %d\n", total);
 }
+// 1025603924 is too low
+//2098502699 is too high
