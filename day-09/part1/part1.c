@@ -1,89 +1,46 @@
+// thanks guy on reddit for the idea of using a difference table instead of recursion
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define SEQUENCE_LEN 20
+#define SENSORS 200
+#define SEQUENCE_LEN 21 // +1 for 'result' at the end`
 
-int sequence[200][SEQUENCE_LEN];
+int sequence[200][SEQUENCE_LEN][SEQUENCE_LEN]; // [sensor][measurement][difference]
 int total = 0;
 
-int CalculatePrediction(int n, int* dif)
+int CalculatePrediction()
 {
-
-    int* differences = (int*)malloc(sizeof(int) * (n+1)); // +1 for 'result' at the end
-    printf("%d: ", n);
-    bool isAllZero = true;
-    for (int i = 0; i < n-1; i++)
+    int history = 0;
+    for (int i = 0; i < SENSORS; i++) // for each sensor
     {
-        differences[i] = dif[i+1] - dif[i];
-        if (dif[i] != 0)
+        history += sequence[i][0][SEQUENCE_LEN - 1]; // last reading in row 0
+        for (int j = 1; j < SEQUENCE_LEN; j++) // for each measurement in reading
         {
-            isAllZero = false;
+            for (int k = 0; k < SEQUENCE_LEN - j; k++) // for each difference in measurement
+            {
+                sequence[i][j][k] = sequence[i][j - 1][k + 1] - sequence[i][j - 1][k];
+            }
+            history += sequence[i][j][SEQUENCE_LEN - j - 1];  // last difference in row j
         }
-        printf("%d ", dif[i]);
     }
-    if (isAllZero) 
-    {
-        free(differences);
-        return 0;
-    }
-    printf("\n");
-    int r = 0;
-    if (n > 0)
-    {
-        r = CalculatePrediction(n - 1, differences) + dif[n-1];
-    }
-    free(differences);
-    return r;
+    return history;
 }
 
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
 
-    // big char array to hold the line
-    char line[256];
-
-    for (int n = 0; fgets(line, sizeof(line), input); n++)
+    // this file input reading is so much more elegant omg
+    for (int i = 0; i < SENSORS; ++i)
     {
-        int index = 0;
-        int currentNumber = 0;
-        int sign = 1;
-        for (int i = 0; i < strlen(line); i++)
+        for (int j = 0; j < SEQUENCE_LEN; ++j)
         {
-            char c = line[i];
-            if (c == ' ' || c == '\n')
-            {
-                currentNumber *= sign;
-                sequence[n][index] = currentNumber;
-                currentNumber = 0;
-                index++;
-                sign = 1;
-            }
-            else if (c == '-')
-            {
-                sign = -1;
-            }
-            else
-            {
-                currentNumber = currentNumber * 10 + (c - '0');
-            }
+            fscanf(input, "%d", &sequence[i][0][j]);  // measurements in row 0 of difference table
         }
-        /* code */
-        //for (int i = 0; i < SEQUENCE_LEN; i++)
-        //{
-        //    printf("%d ", sequence[n][i]);
-        //}
-        //printf("\n");
     }
-    
-    for (int i = 0; i < 200; i++)
-    {
-        total += CalculatePrediction(SEQUENCE_LEN, sequence[i]);
-        
-    }
-    printf("Total: %d\n", total);
+    fclose(input);
+
+    printf("Total: %d\n", CalculatePrediction());
 }
-// 1025603924 is too low
-//2098502699 is too high
