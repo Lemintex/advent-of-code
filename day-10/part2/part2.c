@@ -1,3 +1,6 @@
+// There is an elusive off-by-one error somewhere in this code. I have no idea where it is, but I should probably find it.
+// I THINK it's due to the fact that the last pipe in the loop is not counted as a tile inside the loop, but I'm not sure.
+// TODO: find off-by-one error
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -41,18 +44,19 @@ bool IsValidPipe(char pipe, enum Direction* direction);
 
 int CountTilesInsideLoop()
 {
-    FILE* output = fopen("../output.txt", "w");
+    //FILE* output = fopen("../output.txt", "w");
     int count = 0;
-    bool insideLoop = false;
     char pipe;
     for (int i = 0; i < MAP_SIZE; i++)
     {
-        for (int j = 0; j <= MAP_SIZE; j++)
+        bool insideLoop = false;
+        for (int j = 0; j < MAP_SIZE; j++)
         {
             char p = pipe_map.map[i][j];
             if (pipe_map.visited[i][j])
             {
-                fprintf(output, "%c", p);
+                printf("%c", pipe_map.map[i][j]);
+                //fprintf(output, "%c", p);
                 if (p == 'F' || p == '7' || p == '|')
                 {
                     insideLoop = !insideLoop;
@@ -60,16 +64,17 @@ int CountTilesInsideLoop()
             }
             else
             {
-                fprintf(output, ".");
+                //fprintf(output, ".");
+                if (insideLoop)
+                {
+                    count++;
+                }
             }
-            //else if (insideLoop)
-            //{
-            //    count++;
-            //}
         }
-        fprintf(output, "\n");
+        //fprintf(output, "\n");
+        //printf("\n");
     }
-    fclose(output);
+    //fclose(output);
     return count;
 }
 
@@ -183,6 +188,7 @@ int main()
         }
         for (int j = 0; j < MAP_SIZE; j++)
         {
+            pipe_map.visited[i][j] = false;
             if (pipe_map.map[i][j] == 'S')
             {
                 x = j;
