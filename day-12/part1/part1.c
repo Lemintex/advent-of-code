@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 #define MAX_LINE_LENGTH 256
+#define MAX_SPRINGS 100
+#define MAX_SPRING_LENGTH 10
 
 typedef struct
 {
@@ -27,30 +29,21 @@ int main()
     springs = malloc(lines * sizeof(springs_t));
     rewind(input);
 
-    for (int i = 0; i < lines; i++)
+    for (int i = 0; fgets(line, sizeof(line), input); i++)
     {
-        springs[i].springs = malloc(MAX_LINE_LENGTH * sizeof(char));
-        springs[i].configuration = malloc(MAX_LINE_LENGTH * sizeof(int));
-        char* start = strpbrk(line, "#?.");
-        if (start == NULL) break; 
-        char* end = start + strspn(start, "#?.");
-        int length = end - start;
-        strncpy(springs[i].springs, start, length);
-        start = end;
-        
-        for (int j = 0; start != NULL; j++)
+        char* springList = strtok(line, " ");
+        springs[i].springs = (char*)malloc(strlen(springList)* sizeof(char));
+
+        springs[i].springs = strtok(line, " ");
+
+char* n = strtok(NULL, ",");
+        for (int j = 0; n != NULL; j++)
         {
-            fscanf(input, "%d", &springs[i].configuration[j]);
-            input++;
-            start = input;
+            springs[i].configuration = (int*)realloc(springs[i].configuration, (j+1) * sizeof(int));
+            springs[i].configuration[j] = atoi(n);
+            n = strtok(NULL, ",\n");
+            printf("%d, ", springs[i].configuration[j]);
         }
-    }
-    for (int i = 0; i < lines; i++)
-    {
-        printf("%s\n", springs[i].springs);
-        for (int j = 0; j < 9; j++)
-        {
-            printf("%d\n", springs[i].configuration[j]);
-        }
-    }
+        printf("\n");
+    } 
 }
