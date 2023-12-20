@@ -10,6 +10,7 @@ typedef struct
 {
     char* springs;
     int* configuration;
+    int springGroups;
 } springs_t;
 
 springs_t* springs;
@@ -24,26 +25,41 @@ int main()
     while (fgets(line, sizeof(line), input))
     {
         lines++;
-        /* code */
     }
     springs = malloc(lines * sizeof(springs_t));
     rewind(input);
 
     for (int i = 0; fgets(line, sizeof(line), input); i++)
     {
-        char* springList = strtok(line, " ");
-        springs[i].springs = (char*)malloc(strlen(springList)* sizeof(char));
+        springs[i].springs = (char*)malloc(MAX_SPRING_LENGTH * sizeof(char));
+        springs[i].configuration = (int*)malloc(MAX_SPRINGS * sizeof(int));
 
-        springs[i].springs = strtok(line, " ");
+        char* numStr = strtok(line, " ");
+        springs[i].springs = numStr;
+        printf("%s\n", springs[i].springs);
 
-char* n = strtok(NULL, ",");
+
+        int l = 0;
+        springs[i].configuration = (int*)malloc(l * sizeof(int));
+        char* n = strtok(NULL, ",");
+
         for (int j = 0; n != NULL; j++)
         {
-            springs[i].configuration = (int*)realloc(springs[i].configuration, (j+1) * sizeof(int));
+            int* temp = realloc(springs[i].configuration, (l + 1) * sizeof(int));
+            if (temp == NULL) {
+                // handle the error by freeing previously allocated memory and returning
+                free(springs[i].configuration);
+                return 0;
+            }
+            springs[i].configuration = temp;
             springs[i].configuration[j] = atoi(n);
             n = strtok(NULL, ",\n");
+            l++;
+            springs[i].springGroups = l;
             printf("%d, ", springs[i].configuration[j]);
         }
         printf("\n");
-    } 
+        springs[i].springGroups = l;
+    }
+    printf("Done\n");
 }
