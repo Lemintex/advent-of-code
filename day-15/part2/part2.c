@@ -4,15 +4,14 @@
 
 typedef struct
 {
+    char* label;
     int focal_length;
-    /* data */
 } lens_t;
 
 typedef struct
 {
     lens_t* lens;
     int count;
-    /* data */
 } box_t;
 
 typedef struct
@@ -24,18 +23,21 @@ typedef struct
 instruction_t* instructions;
 box_t hashmap[256]; // Holiday ASCII String Helper Manual Arrangement Procedure
 
-void AddLens(box_t box, int lens)
+int RunHash(char* l);
+
+void AddLens(box_t box, char* label, int focal_length)
 {
     box.count++;
     box.lens = realloc(box.lens, box.count * sizeof(lens_t));
-    box.lens[box.count - 1].focal_length = lens;
+    box.lens[box.count - 1].label = label;
+    box.lens[box.count - 1].focal_length = focal_length;
 }
 
-void RemoveLens(box_t box, int lens)
+void RemoveLens(box_t box, char* lens)
 {
     for (int i = 0; i < box.count; i++)
     {
-        if (box.lens[i].focal_length == lens)
+        if (strcmp(box.lens[i].label, lens))
         {
             for (int j = i; j < box.count - 1; j++)
             {
@@ -55,12 +57,12 @@ void ExecuteInstruction(instruction_t* instruction)
     if (strcmp(instruction->instruction, "-") == 0)
     {
         // Remove lens
-        RemoveLens(hashmap[labelHash], atoi(instruction->instruction));
+        RemoveLens(hashmap[labelHash], instruction->label);
     }
     else
     {
         // Add lens
-        AddLens(hashmap[labelHash], atoi(instruction->instruction));
+        AddLens(hashmap[labelHash], instruction->label, atoi(instruction->instruction));
     }
 }
 
@@ -76,6 +78,19 @@ int RunHash(char* l)
     return hash;
 }
 
+int GetPart2Result()
+{
+    int result = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < hashmap[i].count; j++)
+        {
+            int n = (i+1) *j * hashmap[i].lens[j].focal_length;
+            result += n; 
+        }
+    }
+    return result;
+}
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
@@ -91,31 +106,30 @@ int main()
         char* label, *instruction, *focal_length;
         while (token != NULL)
         {
-            label = token;
-            instruction = strchr(token, '=');
-            focal_length = strchr(token, '-');
+        label = token;
+        instruction = strchr(token, '=');
+        focal_length = strchr(token, '-');
 
-            if (instruction != NULL)
-            {
-                *instruction = '\0';  // Separate label from instruction
-                instruction++;
-            }
-            else if (focal_length != NULL)
-            {
-                *focal_length = '\0';  // Separate instruction from focal_length
-                focal_length++;
-            }
+        if (instruction != NULL) {
+            *instruction = '\0';  // Separate label from instruction
+            instruction++;
+        } else if (focal_length != NULL) {
+            *focal_length = '\0';  // Separate label from lens number
+            focal_length++;
+        } else {
+            printf("Invalid input format: %s\n", token);
+            continue;
+        }
 
             printf("Label: %s\n", label);
             printf("Instruction: %s\n", instruction ? instruction : "-");
+
+            instruction_t inst = {0};
+            inst.label = label;
+            inst.instruction = instruction ? instruction : "-";
+            ExecuteInstruction(&inst);
             token = strtok(NULL, ",");
         }
-        for (int i = 0; i < strlen(line); i++)
-        {
-            char c = line[i];
-        }
-        total = RunHash(line);
     }
-    printf("Total: %d\n", total);
-    
+   printf("Part 2: %d\n", GetPart2Result()); 
 }
