@@ -126,9 +126,6 @@ int main()
                 focal_length++;
             }
 
-            printf("Label: %s\n", label);
-            printf("Instruction: %s\n", instruction ? instruction : "-");
-
             instruction_t inst = {0};
             inst.label = label;
             inst.instruction = instruction ? instruction : "-";
