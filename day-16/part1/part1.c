@@ -145,8 +145,8 @@ void Step(int x, int y, direction_t direction)
             break;
 
         case '.' :
-                UpdateXY(&x, &y, direction);
-                Step(x, y, direction);
+            UpdateXY(&x, &y, direction);
+            Step(x, y, direction);
             break;
     }
 }
@@ -192,7 +192,7 @@ int main()
     for (int i = 0; fgets(line, sizeof(line), input); i++)
     {
         map[i] = (tile_t*)malloc(sizeof(tile_t) * strlen(line));
-        for (int j = 0; j<strlen(line); j++)
+        for (int j = 0; j < strlen(line); j++)
         {
             map[i][j].visited = false;
             map[i][j].tile = line[j];
@@ -201,9 +201,9 @@ int main()
 
     mapWidth = strlen(line);
 
-    for (int i = 0; i<mapHeight; i++)
+    for (int i = 0; i < mapHeight; i++)
     {
-        for (int j = 0; j< mapWidth; j++)
+        for (int j = 0; j < mapWidth; j++)
         {
             char tile = map[i][j].tile;
         }
