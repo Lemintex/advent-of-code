@@ -1,9 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
+#include <stdbool.h>
+
+typedef enum
+{
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST
+} direction_t;
+
+typedef struct
+{
+    int value;
+    direction_t direction;
+    bool visited;
+} node_t;
 
 int** map;
 int mapwidth = 0, mapheight = 0;
+
+void FindShortestPath()
+{
+
+}
+
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
@@ -14,7 +36,6 @@ int main()
     while (fgets(line, sizeof(line), input))
     {
         mapheight++;
-        /* code */
     }
     mapwidth = strlen(line) - 1;
     map = (int**)malloc(mapheight * sizeof(int*));
