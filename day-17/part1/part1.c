@@ -5,6 +5,7 @@
 
 typedef enum
 {
+    NONE,
     NORTH,
     EAST,
     SOUTH,
@@ -13,13 +14,17 @@ typedef enum
 
 typedef struct
 {
-    int value;
+    int coolingValue;
+    int pathValue;
     direction_t direction;
+    char directionChar;
     bool visited;
 } node_t;
 
-int** map;
-int mapwidth = 0, mapheight = 0;
+node_t** visitedNodes;
+
+node_t** map;
+int mapWidth = 0, mapHeight = 0;
 
 void FindShortestPath()
 {
@@ -35,26 +40,30 @@ int main()
 
     while (fgets(line, sizeof(line), input))
     {
-        mapheight++;
+        mapHeight++;
     }
-    mapwidth = strlen(line) - 1;
-    map = (int**)malloc(mapheight * sizeof(int*));
+    mapWidth = strlen(line) - 1;
+    map = (node_t**)malloc(mapHeight * sizeof(node_t*));
     rewind(input);
-    for (int i = 0; i < mapheight; i++)
+    for (int i = 0; i < mapHeight; i++)
     {
         fgets(line, sizeof(line), input);
-        map[i] = (int*)malloc(mapwidth * sizeof(int));
-        for (int j = 0; j < mapwidth; j++)
+        map[i] = (node_t*)malloc(mapWidth * sizeof(node_t));
+        for (int j = 0; j < mapWidth; j++)
         {
-            map[i][j] = line[j] - '0';
+            node_t* node = &map[i][j];
+            node->coolingValue = line[j] - '0';
+            node->pathValue = 999999;
+            node->visited = false;
+            node->direction = NONE;
         }
     }
 
-    for (int i = 0; i < mapheight; i++)
+    for (int i = 0; i < mapHeight; i++)
     {
-        for (int j = 0; j < mapwidth; j++)
+        for (int j = 0; j < mapWidth; j++)
         {
-            printf("%d", map[i][j]);
+            printf("%d", map[i][j].coolingValue);
         }
         printf("\n");
     }
