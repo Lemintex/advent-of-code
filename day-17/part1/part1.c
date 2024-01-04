@@ -15,15 +15,18 @@ typedef enum
 
 typedef struct
 {
+    int mapX, mapY;
     int coolingValue;
     int pathValue;
     direction_t direction;
+    int numSameDirection;
     char directionChar;
     bool visited;
 } node_t;
 
 node_t** visitedNodes;
 
+node_t* tree;
 node_t** map;
 int mapWidth = 0, mapHeight = 0;
 
@@ -72,47 +75,116 @@ void heapify(int array[], int size, int i)
 
 
 // insert an element into the tree
-void insert(int array[], int newNum)
+void insert(node_t newNode)
 {
     if (size == 0)
     {
-        array[0] = newNum;
+        tree[0] = newNode;
         size += 1;
     }
     else
     {
-        array[size] = newNum;
+        tree[size] = newNode;
         size += 1;
         for (int i = size / 2 - 1; i >= 0; i--)
         {
-          heapify(array, size, i);
+          heapify(size, i);
         }
     }
 }
 
 // delete an element from the tree
-void deleteRoot(int array[], int num)
+void deleteRoot(int num)
 {
     int i;
     for (i = 0; i < size; i++)
     {
-        if (num == array[i])
+        if (num == tree[i].pathValue)
         {
             break;
         }
     }
 
-    swap(&array[i], &array[size - 1]);
+    swap(&tree[i], &tree[size - 1]);
     size -= 1;
     for (int i = size / 2 - 1; i >= 0; i--)
     {
-        heapify(array, size, i);
+        heapify(size, i);
     }
 }
 
 // ---------------------------------------------
 // END PRIORITY QUEUE
 
+void Dijkstra()
+{
+    visitedNodes = (node_t**)malloc(mapHeight * mapWidth * sizeof(node_t*));
+
+    // start at the top left
+    node_t* currentNode = &map[0][0];
+    currentNode->pathValue = 0;
+    currentNode->visited = true;
+    visitedNodes[0] = currentNode;
+    int x = 0, y = 0;
+
+    // while we haven't reached the bottom right
+
+    while (currentNode->mapX != map[mapHeight - 1][mapWidth - 1].mapX || currentNode->mapY != map[mapHeight - 1][mapWidth - 1].mapY)
+    {
+        // check the 4 adjacent nodes
+        if (currentNode->mapY > 0)
+        {
+            node_t* northNode = &map[currentNode->mapY - 1][currentNode->mapX];
+            if (!northNode->visited)
+            {
+                northNode->pathValue = currentNode->pathValue + northNode->coolingValue;
+                // if they are not visited, add them to the priority queue
+                insert(*northNode);
+            }
+        }
+
+        if (currentNode->mapX < mapWidth - 1)
+        {
+            node_t* eastNode = &map[currentNode->mapY][currentNode->mapX + 1];
+            if (!eastNode->visited)
+            {
+                eastNode->pathValue = currentNode->pathValue + eastNode->coolingValue;
+                // if they are not visited, add them to the priority queue
+                insert(*eastNode);
+            }
+        }
+
+        if (currentNode->mapY < mapHeight - 1)
+        {
+            node_t* southNode = &map[currentNode->mapY + 1][currentNode->mapX];
+            if (!southNode->visited)
+            {
+                southNode->pathValue = currentNode->pathValue + southNode->coolingValue;
+                // if they are not visited, add them to the priority queue
+                insert(*southNode);
+            }
+        }
+
+        if (currentNode->mapX > 0)
+        {
+            node_t* westNode = &map[currentNode->mapY][currentNode->mapX - 1];
+            if (!westNode->visited)
+            {
+                westNode->pathValue = currentNode->pathValue + westNode->coolingValue;
+                // if they are not visited, add them to the priority queue
+                insert(*westNode);
+            }
+        }
+                // if they are visited, check if the path value is lower than the current path value
+                // if it is, update the path value and direction
+                // if it isn't, do nothing
+                // then, remove the current node from the priority queue
+                // set the current node to the next node in the priority queue
+                // repeat
+                // if the priority queue is empty, we are done
+                // if the current node is the bottom right, we are done
+    }
+}
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
@@ -134,6 +206,8 @@ int main()
         for (int j = 0; j < mapWidth; j++)
         {
             node_t* node = &map[i][j];
+            node->mapX = j;
+            node->mapY = i;
             node->coolingValue = line[j] - '0';
             node->pathValue = 99999999;
             node->visited = false;
