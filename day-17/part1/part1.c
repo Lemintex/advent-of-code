@@ -132,50 +132,61 @@ void Dijkstra()
     while (currentNode->mapX != map[mapHeight - 1][mapWidth - 1].mapX || currentNode->mapY != map[mapHeight - 1][mapWidth - 1].mapY)
     {
         // check the 4 adjacent nodes
-        if (currentNode->mapY > 0)
+        if (currentNode->mapY > 0 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY - 1][currentNode->mapX].direction) || currentNode->direction == NONE))
         {
             node_t* northNode = &map[currentNode->mapY - 1][currentNode->mapX];
             if (!northNode->visited)
             {
                 northNode->pathValue = currentNode->pathValue + northNode->coolingValue;
+                northNode->direction = NORTH;
+                northNode->numSameDirection = currentNode->numSameDirection + 1;
+
                 // if they are not visited, add them to the priority queue
                 insert(*northNode);
             }
         }
 
-        if (currentNode->mapX < mapWidth - 1)
+        if (currentNode->mapX < mapWidth - 1 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY][currentNode->mapX + 1].direction) || currentNode->direction == NONE))
         {
             node_t* eastNode = &map[currentNode->mapY][currentNode->mapX + 1];
             if (!eastNode->visited)
             {
                 eastNode->pathValue = currentNode->pathValue + eastNode->coolingValue;
+                eastNode->direction = EAST;
+                eastNode->numSameDirection = currentNode->numSameDirection + 1;
+
                 // if they are not visited, add them to the priority queue
                 insert(*eastNode);
             }
         }
 
-        if (currentNode->mapY < mapHeight - 1)
+        if (currentNode->mapY < mapHeight - 1 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY + 1][currentNode->mapX].direction) || currentNode->direction == NONE))
         {
             node_t* southNode = &map[currentNode->mapY + 1][currentNode->mapX];
             if (!southNode->visited)
             {
                 southNode->pathValue = currentNode->pathValue + southNode->coolingValue;
+                southNode->direction = SOUTH;
+                southNode->numSameDirection = currentNode->numSameDirection + 1;
+
                 // if they are not visited, add them to the priority queue
                 insert(*southNode);
             }
         }
 
-        if (currentNode->mapX > 0)
+        if (currentNode->mapX > 0 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY][currentNode->mapX - 1].direction) || currentNode->direction == NONE))
         {
             node_t* westNode = &map[currentNode->mapY][currentNode->mapX - 1];
             if (!westNode->visited)
             {
                 westNode->pathValue = currentNode->pathValue + westNode->coolingValue;
+                westNode->direction = WEST;
+                westNode->numSameDirection = currentNode->numSameDirection + 1;
                 // if they are not visited, add them to the priority queue
                 insert(*westNode);
             }
         }
-                // if they are visited, check if the path value is lower than the current path value
+                // if they are visited, check if the path value is lower `than the current path value
                 // if it is, update the path value and direction
                 // if it isn't, do nothing
                 // then, remove the current node from the priority queue
@@ -183,6 +194,7 @@ void Dijkstra()
                 // repeat
                 // if the priority queue is empty, we are done
                 // if the current node is the bottom right, we are done
+
     }
 }
 int main()
