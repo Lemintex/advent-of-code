@@ -43,7 +43,7 @@ void swap(node_t* a, node_t* b)
 
 
 // heapify the tree
-void heapify(int array[], int size, int i)
+void heapify(int size, int i)
 {
     if (size == 1)
     {
@@ -55,11 +55,11 @@ void heapify(int array[], int size, int i)
         int largest = i;
         int l = 2 * i + 1;
         int r = 2 * i + 2;
-        if (l < size && array[l] > array[largest])
+        if (l < size && tree[l].pathValue > tree[largest].pathValue)
         {
             largest = l;
         }
-        if (r < size && array[r] > array[largest])
+        if (r < size && tree[r].pathValue > tree[largest].pathValue)
         {
             largest = r;
         }
@@ -67,8 +67,8 @@ void heapify(int array[], int size, int i)
         // Swap and continue heapifying if root is not largest
         if (largest != i)
         {
-          swap(&array[i], &array[largest]);
-          heapify(array, size, largest);
+          swap(&tree[i], &tree[largest]);
+          heapify(size, largest);
         }
     }
 }
@@ -194,6 +194,11 @@ void Dijkstra()
                 // repeat
                 // if the priority queue is empty, we are done
                 // if the current node is the bottom right, we are done
+                if (currentNode->mapX == mapWidth - 1 && currentNode->mapY == mapHeight - 1)
+                {
+                printf("Path value: %d\n", currentNode->pathValue);
+                return;
+                }
 
     }
 }
@@ -235,5 +240,5 @@ int main()
         }
         printf("\n");
     }
-    
+    Dijkstra();
 }
