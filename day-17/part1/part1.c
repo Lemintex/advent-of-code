@@ -13,195 +13,162 @@ typedef enum
     WEST
 } direction_t;
 
-typedef struct
+typedef struct node_t node_t;
+struct node_t
 {
+    node_t* parent;
+    bool isStartNode;
+    bool isPath;
     int mapX, mapY;
     int coolingValue;
-    int pathValue;
+    int totalPathValue;
     direction_t direction;
     int numSameDirection;
-    char directionChar;
     bool visited;
-} node_t;
+};
 
 node_t** visitedNodes;
 
-node_t* tree;
+node_t* nodesByPathValue;
 node_t** map;
 int mapWidth = 0, mapHeight = 0;
 
-// PRIORITY QUEUE
-// ---------------------------------------------
-int size = 0;
-
-void swap(node_t* a, node_t* b)
+int nodeCompare(const void* a, const void* b)
 {
-    node_t temp = *b;
-    *b = *a;
-    *a = temp;
-}
+    node_t* nodeA = (node_t*)a;
+    node_t* nodeB = (node_t*)b;
 
-
-// heapify the tree
-void heapify(int size, int i)
-{
-    if (size == 1)
+    if (nodeA->totalPathValue < nodeB->totalPathValue)
     {
-        printf("Single element in the heap");
+        return -1;
+    }
+    else if (nodeA->totalPathValue > nodeB->totalPathValue)
+    {
+        return 1;
     }
     else
     {
-        // Find the largest among root, left child and right child
-        int largest = i;
-        int l = 2 * i + 1;
-        int r = 2 * i + 2;
-        if (l < size && tree[l].pathValue > tree[largest].pathValue)
-        {
-            largest = l;
-        }
-        if (r < size && tree[r].pathValue > tree[largest].pathValue)
-        {
-            largest = r;
-        }
-  
-        // Swap and continue heapifying if root is not largest
-        if (largest != i)
-        {
-          swap(&tree[i], &tree[largest]);
-          heapify(size, largest);
-        }
+        return 0;
     }
 }
+// Dijkstra's Algorithm in C
 
+#define INFINITY 9999
+#define MAX 10
 
-// insert an element into the tree
-void insert(node_t newNode)
-{
-    if (size == 0)
+void Dijkstra() {
+    // put 2d array into 1d array
+    node_t* queuedNodes[mapHeight * mapWidth];
+    int index = 0;
+    for (int i = 0; i < mapHeight; i++)
     {
-        tree[0] = newNode;
-        size += 1;
-    }
-    else
-    {
-        tree[size] = newNode;
-        size += 1;
-        for (int i = size / 2 - 1; i >= 0; i--)
+        for (int j = 0; j < mapWidth; j++)
         {
-          heapify(size, i);
-        }
-    }
-}
-
-// delete an element from the tree
-void deleteRoot(int num)
-{
-    int i;
-    for (i = 0; i < size; i++)
-    {
-        if (num == tree[i].pathValue)
-        {
-            break;
+            queuedNodes[index] = &map[i][j];
+            index++;
         }
     }
 
-    swap(&tree[i], &tree[size - 1]);
-    size -= 1;
-    for (int i = size / 2 - 1; i >= 0; i--)
+    node_t* startNode = &map[0][0];
+    startNode->isStartNode = true;
+    int visitedNodesCount = 0;
+
+    node_t* currentNode = startNode;
+    currentNode->totalPathValue = currentNode->coolingValue;
+    while (true)
     {
-        heapify(size, i);
-    }
-}
-
-// ---------------------------------------------
-// END PRIORITY QUEUE
-
-void Dijkstra()
-{
-    visitedNodes = (node_t**)malloc(mapHeight * mapWidth * sizeof(node_t*));
-
-    // start at the top left
-    node_t* currentNode = &map[0][0];
-    currentNode->pathValue = 0;
-    currentNode->visited = true;
-    visitedNodes[0] = currentNode;
-    int x = 0, y = 0;
-
-    // while we haven't reached the bottom right
-
-    while (currentNode->mapX != map[mapHeight - 1][mapWidth - 1].mapX || currentNode->mapY != map[mapHeight - 1][mapWidth - 1].mapY)
-    {
-        // check the 4 adjacent nodes
-        if (currentNode->mapY > 0 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY - 1][currentNode->mapX].direction) || currentNode->direction == NONE))
+        if (currentNode->mapX == mapWidth - 1 && currentNode->mapY == mapHeight - 1)
         {
-            node_t* northNode = &map[currentNode->mapY - 1][currentNode->mapX];
-            if (!northNode->visited)
+            printf("Shortest path: %d\n", currentNode->totalPathValue);
+            for (int i = 0; i < mapWidth; i++)
             {
-                northNode->pathValue = currentNode->pathValue + northNode->coolingValue;
-                northNode->direction = NORTH;
-                northNode->numSameDirection = currentNode->numSameDirection + 1;
-
-                // if they are not visited, add them to the priority queue
-                insert(*northNode);
+                printf("%d", map[mapHeight - 1][i].coolingValue);
             }
+            printf("Cooling value: %d\n", currentNode->coolingValue);
+            return;
         }
 
-        if (currentNode->mapX < mapWidth - 1 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY][currentNode->mapX + 1].direction) || currentNode->direction == NONE))
+        // Find the next node to visit
+        int minPathValue = 999999999;
+        int minPathValueIndex = 0;
+        for (int i = 0; i < mapHeight * mapWidth; i++)
         {
-            node_t* eastNode = &map[currentNode->mapY][currentNode->mapX + 1];
-            if (!eastNode->visited)
+            if (queuedNodes[i]->totalPathValue < minPathValue && !queuedNodes[i]->visited)
             {
-                eastNode->pathValue = currentNode->pathValue + eastNode->coolingValue;
-                eastNode->direction = EAST;
-                eastNode->numSameDirection = currentNode->numSameDirection + 1;
-
-                // if they are not visited, add them to the priority queue
-                insert(*eastNode);
+                minPathValue = queuedNodes[i]->totalPathValue;
+                minPathValueIndex = i;
             }
         }
+        queuedNodes[minPathValueIndex]->visited = true;
+        currentNode = queuedNodes[minPathValueIndex];
 
-        if (currentNode->mapY < mapHeight - 1 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY + 1][currentNode->mapX].direction) || currentNode->direction == NONE))
+        // Visit all neighbors
+        node_t* neighbors[4];
+        int neighborsCount = 0;
+        if (currentNode->mapX > 0)
         {
-            node_t* southNode = &map[currentNode->mapY + 1][currentNode->mapX];
-            if (!southNode->visited)
-            {
-                southNode->pathValue = currentNode->pathValue + southNode->coolingValue;
-                southNode->direction = SOUTH;
-                southNode->numSameDirection = currentNode->numSameDirection + 1;
-
-                // if they are not visited, add them to the priority queue
-                insert(*southNode);
-            }
+            neighbors[neighborsCount] = &map[currentNode->mapY][currentNode->mapX - 1];
+            neighbors[neighborsCount]->direction = EAST;
+            neighborsCount++;
         }
 
-        if (currentNode->mapX > 0 && ((currentNode->numSameDirection >= 3 && currentNode->direction == map[currentNode->mapY][currentNode->mapX - 1].direction) || currentNode->direction == NONE))
+        if (currentNode->mapX < mapWidth - 1)
         {
-            node_t* westNode = &map[currentNode->mapY][currentNode->mapX - 1];
-            if (!westNode->visited)
-            {
-                westNode->pathValue = currentNode->pathValue + westNode->coolingValue;
-                westNode->direction = WEST;
-                westNode->numSameDirection = currentNode->numSameDirection + 1;
-                // if they are not visited, add them to the priority queue
-                insert(*westNode);
-            }
+            neighbors[neighborsCount] = &map[currentNode->mapY][currentNode->mapX + 1];
+            neighbors[neighborsCount]->direction = WEST;
+            neighborsCount++;
         }
-                // if they are visited, check if the path value is lower `than the current path value
-                // if it is, update the path value and direction
-                // if it isn't, do nothing
-                // then, remove the current node from the priority queue
-                // set the current node to the next node in the priority queue
-                // repeat
-                // if the priority queue is empty, we are done
-                // if the current node is the bottom right, we are done
-                if (currentNode->mapX == mapWidth - 1 && currentNode->mapY == mapHeight - 1)
+
+        if (currentNode->mapY > 0)
+        {
+            neighbors[neighborsCount] = &map[currentNode->mapY - 1][currentNode->mapX];
+            neighbors[neighborsCount]->direction = NORTH;
+            neighborsCount++;
+        }
+
+        if (currentNode->mapY < mapHeight - 1)
+        {
+            neighbors[neighborsCount] = &map[currentNode->mapY + 1][currentNode->mapX];
+            neighbors[neighborsCount]->direction = SOUTH;
+            neighborsCount++;
+        }
+
+        for (int i = 0; i < neighborsCount; i++)
+        {
+            node_t* neighbor = neighbors[i];
+            if (neighbor->visited || (neighbor->direction == currentNode->direction && currentNode->numSameDirection >= 2))
+            {
+                continue;
+            }
+            if (neighbor->direction != currentNode->direction)
+            {
+                neighbor->numSameDirection = 0;
+            }
+            else
+            {
+                neighbor->numSameDirection = currentNode->numSameDirection + 1;
+            }
+            neighbor->direction = currentNode->direction;
+            neighbor->parent = &map[currentNode->mapY][currentNode->mapX];
+            if (!neighbor->visited)
+            {
+                neighbor->visited = true;
+                neighbor->totalPathValue = currentNode->totalPathValue + neighbor->coolingValue;
+                queuedNodes[visitedNodesCount] = neighbor;
+                visitedNodesCount++;
+            }
+            else
+            {
+                if (neighbor->totalPathValue > currentNode->totalPathValue + neighbor->coolingValue)
                 {
-                printf("Path value: %d\n", currentNode->pathValue);
-                return;
+                    neighbor->totalPathValue = currentNode->totalPathValue + neighbor->coolingValue;
                 }
-
+            }
+        }
     }
+    printf("Shortest path: %d\n", currentNode->totalPathValue);
 }
+
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
@@ -213,8 +180,11 @@ int main()
     {
         mapHeight++;
     }
-    mapWidth = strlen(line) - 1;
+    mapWidth = strlen(line);
+
+    nodesByPathValue = (node_t*)malloc(mapHeight * mapWidth * sizeof(node_t));
     map = (node_t**)malloc(mapHeight * sizeof(node_t*));
+    int nodeIndex = 0;
     rewind(input);
     for (int i = 0; i < mapHeight; i++)
     {
@@ -226,19 +196,39 @@ int main()
             node->mapX = j;
             node->mapY = i;
             node->coolingValue = line[j] - '0';
-            node->pathValue = 99999999;
+            node->totalPathValue = 99999999;
             node->visited = false;
             node->direction = NONE;
+            map[i][j] = *node;
+
+            nodesByPathValue[nodeIndex] = *node;
         }
     }
 
+
+    Dijkstra();
+
+
+node_t* currentNode = &map[mapHeight - 1][mapWidth - 1];
+    while (currentNode->isStartNode == false)
+    {
+        currentNode->isPath = true;
+        currentNode = (node_t*)currentNode->parent;
+    }
     for (int i = 0; i < mapHeight; i++)
     {
-        for (int j = 0; j < mapWidth; j++)
+    for (int j = 0; j < mapWidth; j++)
         {
-            printf("%d", map[i][j].coolingValue);
+            if (map[i][j].isPath)
+            {
+                printf("X");
+            }
+            else
+            {
+                printf("%d", map[i][j].coolingValue);
+            }
         }
         printf("\n");
     }
-    Dijkstra();
+
 }
