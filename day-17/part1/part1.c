@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-int numberOfTilesInSameDirection = 0;
 typedef enum
 {
     NONE,
@@ -24,6 +23,7 @@ struct node_t
     int totalPathValue;
     direction_t direction;
     int numSameDirection;
+    bool queued;
     bool visited;
 };
 
@@ -33,50 +33,27 @@ node_t* nodesByPathValue;
 node_t** map;
 int mapWidth = 0, mapHeight = 0;
 
-int nodeCompare(const void* a, const void* b)
-{
-    node_t* nodeA = (node_t*)a;
-    node_t* nodeB = (node_t*)b;
-
-    if (nodeA->totalPathValue < nodeB->totalPathValue)
-    {
-        return -1;
-    }
-    else if (nodeA->totalPathValue > nodeB->totalPathValue)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-// Dijkstra's Algorithm in C
-
-#define INFINITY 9999
-#define MAX 10
-
 void Dijkstra() {
     // put 2d array into 1d array
-    node_t* queuedNodes[mapHeight * mapWidth];
+    node_t* nodes[mapHeight * mapWidth];
     int index = 0;
     for (int i = 0; i < mapHeight; i++)
     {
         for (int j = 0; j < mapWidth; j++)
         {
-            queuedNodes[index] = &map[i][j];
+            nodes[index] = &map[i][j];
+            nodes[index]->visited = false;
             index++;
         }
     }
 
-    node_t* startNode = &map[0][0];
-    startNode->isStartNode = true;
-    int visitedNodesCount = 0;
-
-    node_t* currentNode = startNode;
+    node_t* currentNode = &map[0][0];
+    currentNode->isStartNode = true;
+    currentNode->queued = true;
     currentNode->totalPathValue = currentNode->coolingValue;
     while (true)
     {
+        printf("Current node direction: %d\n", currentNode->numSameDirection);
         if (currentNode->mapX == mapWidth - 1 && currentNode->mapY == mapHeight - 1)
         {
             printf("Shortest path: %d\n", currentNode->totalPathValue);
@@ -84,23 +61,32 @@ void Dijkstra() {
             {
                 printf("%d", map[mapHeight - 1][i].coolingValue);
             }
+            printf("\n");
             printf("Cooling value: %d\n", currentNode->coolingValue);
             return;
         }
-
+        printf("Node path value: %d\n", currentNode->totalPathValue);
         // Find the next node to visit
         int minPathValue = 999999999;
         int minPathValueIndex = 0;
         for (int i = 0; i < mapHeight * mapWidth; i++)
         {
-            if (queuedNodes[i]->totalPathValue < minPathValue && !queuedNodes[i]->visited)
+            node_t* node = nodes[i];
+            if (node->parent == NULL)
             {
-                minPathValue = queuedNodes[i]->totalPathValue;
+                continue;
+            }
+            if (node->coolingValue + node->parent->totalPathValue < minPathValue && !node->visited && node->queued)
+            {
+                minPathValue = node->parent->totalPathValue + node->coolingValue;
                 minPathValueIndex = i;
             }
         }
-        queuedNodes[minPathValueIndex]->visited = true;
-        currentNode = queuedNodes[minPathValueIndex];
+        currentNode = nodes[minPathValueIndex];
+
+        currentNode->totalPathValue = minPathValue;
+        currentNode->visited = true;
+        
 
         // Visit all neighbors
         node_t* neighbors[4];
@@ -148,14 +134,16 @@ void Dijkstra() {
             {
                 neighbor->numSameDirection = currentNode->numSameDirection + 1;
             }
+            neighbor->queued = true;
             neighbor->direction = currentNode->direction;
             neighbor->parent = &map[currentNode->mapY][currentNode->mapX];
+            if (currentNode->parent != NULL)
+            {
+                printf("Parent node: %d, %d\n", currentNode->parent->mapX, currentNode->parent->mapY);
+            }
             if (!neighbor->visited)
             {
-                neighbor->visited = true;
                 neighbor->totalPathValue = currentNode->totalPathValue + neighbor->coolingValue;
-                queuedNodes[visitedNodesCount] = neighbor;
-                visitedNodesCount++;
             }
             else
             {
@@ -210,7 +198,7 @@ int main()
 
 
 node_t* currentNode = &map[mapHeight - 1][mapWidth - 1];
-    while (currentNode->isStartNode == false)
+    while (!currentNode->isStartNode)
     {
         currentNode->isPath = true;
         currentNode = (node_t*)currentNode->parent;
