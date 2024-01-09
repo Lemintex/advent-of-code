@@ -32,6 +32,75 @@ node_t** visitedNodes;
 node_t* nodesByPathValue;
 node_t** map;
 int mapWidth = 0, mapHeight = 0;
+void FindNextNodeToVisit(node_t* nodes[mapHeight * mapWidth], int* nextNodeIndex)
+{
+    int minPathValue = 999999999;
+    for (int i = 0; i < mapHeight * mapWidth; i++)
+    {
+        node_t* node = nodes[i];
+        if (node->totalPathValue < minPathValue && !node->visited && node->queued)
+        {
+            minPathValue = node->totalPathValue;
+            *nextNodeIndex = i;
+        }
+    }
+    nodes[*nextNodeIndex]->visited = true;
+}
+
+void UpdateNeighbors(node_t* node, node_t* neighbors[4], int neighborsCount)
+{
+    for (int i = 0; i < neighborsCount; i++)
+    {
+        node_t* neighbor = neighbors[i];
+        if (neighbor->visited || neighbor->queued || (neighbor->direction == node->direction && node->numSameDirection >= 2))
+        {
+            continue;
+        }
+        if (neighbor->direction != node->direction)
+        {
+            neighbor->numSameDirection = 0;
+        }
+        else
+        {
+            neighbor->numSameDirection = node->numSameDirection + 1;
+        }
+
+        neighbor->queued = true;
+        neighbor->parent = node;
+        neighbor->totalPathValue = node->totalPathValue + neighbor->coolingValue;
+    }
+}
+
+void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
+{
+    if (node->mapX > 0)
+    {
+        neighbors[*neighborsCount] = &map[node->mapY][node->mapX - 1];
+        neighbors[*neighborsCount]->direction = WEST;
+        (*neighborsCount)++;
+    }
+
+    if (node->mapX < mapWidth - 1)
+    {
+        neighbors[*neighborsCount] = &map[node->mapY][node->mapX + 1];
+        neighbors[*neighborsCount]->direction = EAST;
+        (*neighborsCount)++;
+    }
+
+    if (node->mapY > 0)
+    {
+        neighbors[*neighborsCount] = &map[node->mapY - 1][node->mapX];
+        neighbors[*neighborsCount]->direction = NORTH;
+        (*neighborsCount)++;
+    }
+
+    if (node->mapY < mapHeight - 1)
+    {
+        neighbors[*neighborsCount] = &map[node->mapY + 1][node->mapX];
+        neighbors[*neighborsCount]->direction = SOUTH;
+        (*neighborsCount)++;
+    }
+}
 
 void Dijkstra() {
     // put 2d array into 1d array
@@ -51,6 +120,8 @@ void Dijkstra() {
     currentNode->isStartNode = true;
     currentNode->queued = true;
     currentNode->totalPathValue = currentNode->coolingValue;
+
+    int nextNodeToVisit = 0;
     while (true)
     {
         printf("Current node direction: %d\n", currentNode->numSameDirection);
@@ -66,93 +137,25 @@ void Dijkstra() {
             return;
         }
         printf("Node path value: %d\n", currentNode->totalPathValue);
-        // Find the next node to visit
-        int minPathValue = 999999999;
-        int minPathValueIndex = 0;
-        for (int i = 0; i < mapHeight * mapWidth; i++)
-        {
-            node_t* node = nodes[i];
-            if (node->parent == NULL)
-            {
-                continue;
-            }
-            if (node->coolingValue + node->parent->totalPathValue < minPathValue && !node->visited && node->queued)
-            {
-                minPathValue = node->parent->totalPathValue + node->coolingValue;
-                minPathValueIndex = i;
-            }
-        }
-        currentNode = nodes[minPathValueIndex];
-
-        currentNode->totalPathValue = minPathValue;
-        currentNode->visited = true;
-        
 
         // Visit all neighbors
         node_t* neighbors[4];
         int neighborsCount = 0;
-        if (currentNode->mapX > 0)
-        {
-            neighbors[neighborsCount] = &map[currentNode->mapY][currentNode->mapX - 1];
-            neighbors[neighborsCount]->direction = EAST;
-            neighborsCount++;
-        }
 
-        if (currentNode->mapX < mapWidth - 1)
-        {
-            neighbors[neighborsCount] = &map[currentNode->mapY][currentNode->mapX + 1];
-            neighbors[neighborsCount]->direction = WEST;
-            neighborsCount++;
-        }
+        // Get neighbors
+        GetNodeNeighbors(currentNode, neighbors, &neighborsCount);
 
-        if (currentNode->mapY > 0)
-        {
-            neighbors[neighborsCount] = &map[currentNode->mapY - 1][currentNode->mapX];
-            neighbors[neighborsCount]->direction = NORTH;
-            neighborsCount++;
-        }
+        // Update neighbors
+        UpdateNeighbors(currentNode, neighbors, neighborsCount);
 
-        if (currentNode->mapY < mapHeight - 1)
-        {
-            neighbors[neighborsCount] = &map[currentNode->mapY + 1][currentNode->mapX];
-            neighbors[neighborsCount]->direction = SOUTH;
-            neighborsCount++;
-        }
 
-        for (int i = 0; i < neighborsCount; i++)
-        {
-            node_t* neighbor = neighbors[i];
-            if (neighbor->visited || (neighbor->direction == currentNode->direction && currentNode->numSameDirection >= 2))
-            {
-                continue;
-            }
-            if (neighbor->direction != currentNode->direction)
-            {
-                neighbor->numSameDirection = 0;
-            }
-            else
-            {
-                neighbor->numSameDirection = currentNode->numSameDirection + 1;
-            }
-            neighbor->queued = true;
-            neighbor->direction = currentNode->direction;
-            neighbor->parent = &map[currentNode->mapY][currentNode->mapX];
-            if (currentNode->parent != NULL)
-            {
-                printf("Parent node: %d, %d\n", currentNode->parent->mapX, currentNode->parent->mapY);
-            }
-            if (!neighbor->visited)
-            {
-                neighbor->totalPathValue = currentNode->totalPathValue + neighbor->coolingValue;
-            }
-            else
-            {
-                if (neighbor->totalPathValue > currentNode->totalPathValue + neighbor->coolingValue)
-                {
-                    neighbor->totalPathValue = currentNode->totalPathValue + neighbor->coolingValue;
-                }
-            }
-        }
+        // Find the next node to visit
+        nextNodeToVisit = 0;
+
+        FindNextNodeToVisit(nodes, &nextNodeToVisit);
+
+        currentNode = nodes[nextNodeToVisit];
+
     }
     printf("Shortest path: %d\n", currentNode->totalPathValue);
 }
@@ -198,8 +201,10 @@ int main()
 
 
 node_t* currentNode = &map[mapHeight - 1][mapWidth - 1];
+    printf("None: %d\n", NONE);
     while (!currentNode->isStartNode)
     {
+        printf("Direction: %d\n", currentNode->direction);
         currentNode->isPath = true;
         currentNode = (node_t*)currentNode->parent;
     }
