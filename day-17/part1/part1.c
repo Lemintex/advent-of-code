@@ -74,7 +74,7 @@ void UpdateNeighbors(node_t* node, node_t* neighbors[4], int neighborsCount)
 
 void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
 {
-    if (node->mapX > 0)
+    if (node->mapX > 0 && node->direction != EAST && (node->direction != WEST || node->numSameDirection < 2))
     {
         neighbors[*neighborsCount] = &map[node->mapY][node->mapX - 1];
         neighbors[*neighborsCount]->direction = WEST;
@@ -83,7 +83,7 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
         (*neighborsCount)++;
     }
 
-    if (node->mapX < mapWidth - 1)
+    if (node->mapX < mapWidth - 1 && node->direction != WEST && (node->direction != EAST || node->numSameDirection < 2))
     {
         neighbors[*neighborsCount] = &map[node->mapY][node->mapX + 1];
         neighbors[*neighborsCount]->direction = EAST;
@@ -92,7 +92,7 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
         (*neighborsCount)++;
     }
 
-    if (node->mapY > 0)
+    if (node->mapY > 0 && node->direction != SOUTH && (node->direction != NORTH || node->numSameDirection < 2))
     {
         neighbors[*neighborsCount] = &map[node->mapY - 1][node->mapX];
         neighbors[*neighborsCount]->direction = NORTH;
@@ -101,7 +101,7 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
         (*neighborsCount)++;
     }
 
-    if (node->mapY < mapHeight - 1)
+    if (node->mapY < mapHeight - 1 && node->direction != NORTH && (node->direction != SOUTH || node->numSameDirection < 2))
     {
         neighbors[*neighborsCount] = &map[node->mapY + 1][node->mapX];
         neighbors[*neighborsCount]->direction = SOUTH;
