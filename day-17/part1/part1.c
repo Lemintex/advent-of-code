@@ -27,24 +27,25 @@ struct node_t
     bool visited;
 };
 
-node_t** visitedNodes;
-
-node_t* nodesByPathValue;
 node_t** map;
 int mapWidth = 0, mapHeight = 0;
-void FindNextNodeToVisit(node_t* nodes[mapHeight * mapWidth], int* nextNodeIndex)
+
+void FindNextNodeToVisit(int* nextNodeX, int* nextNodeY)
 {
     int minPathValue = 999999999;
-    for (int i = 0; i < mapHeight * mapWidth; i++)
+    for (int i = 0; i < mapHeight; i++)
     {
-        node_t* node = nodes[i];
-        if (node->totalPathValue < minPathValue && !node->visited && node->queued)
+        for (int j = 0; j < mapWidth; j++)
         {
-            minPathValue = node->totalPathValue;
-            *nextNodeIndex = i;
+            node_t* node = &map[i][j];
+            if (node->totalPathValue < minPathValue && !node->visited && node->queued)
+            {
+                minPathValue = node->totalPathValue;
+                *nextNodeX = node->mapX;
+                *nextNodeY = node->mapY;
+            }
         }
     }
-    nodes[*nextNodeIndex]->visited = true;
 }
 
 void UpdateNeighbors(node_t* node, node_t* neighbors[4], int neighborsCount)
@@ -77,6 +78,8 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
     {
         neighbors[*neighborsCount] = &map[node->mapY][node->mapX - 1];
         neighbors[*neighborsCount]->direction = WEST;
+        neighbors[*neighborsCount]->mapX = node->mapX - 1;
+        neighbors[*neighborsCount]->mapY = node->mapY;
         (*neighborsCount)++;
     }
 
@@ -84,6 +87,8 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
     {
         neighbors[*neighborsCount] = &map[node->mapY][node->mapX + 1];
         neighbors[*neighborsCount]->direction = EAST;
+        neighbors[*neighborsCount]->mapX = node->mapX + 1;
+        neighbors[*neighborsCount]->mapY = node->mapY;
         (*neighborsCount)++;
     }
 
@@ -91,6 +96,8 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
     {
         neighbors[*neighborsCount] = &map[node->mapY - 1][node->mapX];
         neighbors[*neighborsCount]->direction = NORTH;
+        neighbors[*neighborsCount]->mapX = node->mapX;
+        neighbors[*neighborsCount]->mapY = node->mapY - 1;
         (*neighborsCount)++;
     }
 
@@ -98,20 +105,20 @@ void GetNodeNeighbors(node_t* node, node_t* neighbors[4], int* neighborsCount)
     {
         neighbors[*neighborsCount] = &map[node->mapY + 1][node->mapX];
         neighbors[*neighborsCount]->direction = SOUTH;
+        neighbors[*neighborsCount]->mapX = node->mapX;
+        neighbors[*neighborsCount]->mapY = node->mapY + 1; 
         (*neighborsCount)++;
     }
 }
 
 void Dijkstra() {
-    // put 2d array into 1d array
-    node_t* nodes[mapHeight * mapWidth];
+    int nextNodeX = 0, nextNodeY = 0;
     int index = 0;
     for (int i = 0; i < mapHeight; i++)
     {
         for (int j = 0; j < mapWidth; j++)
         {
-            nodes[index] = &map[i][j];
-            nodes[index]->visited = false;
+            map[i][j].visited = false;
             index++;
         }
     }
@@ -150,12 +157,10 @@ void Dijkstra() {
 
 
         // Find the next node to visit
-        nextNodeToVisit = 0;
+currentNode->visited = true;
+        FindNextNodeToVisit(&nextNodeX, &nextNodeY);
 
-        FindNextNodeToVisit(nodes, &nextNodeToVisit);
-
-        currentNode = nodes[nextNodeToVisit];
-
+        currentNode = &map[nextNodeY][nextNodeX];
     }
     printf("Shortest path: %d\n", currentNode->totalPathValue);
 }
@@ -173,7 +178,6 @@ int main()
     }
     mapWidth = strlen(line);
 
-    nodesByPathValue = (node_t*)malloc(mapHeight * mapWidth * sizeof(node_t));
     map = (node_t**)malloc(mapHeight * sizeof(node_t*));
     int nodeIndex = 0;
     rewind(input);
@@ -189,10 +193,10 @@ int main()
             node->coolingValue = line[j] - '0';
             node->totalPathValue = 99999999;
             node->visited = false;
+            node->queued = false;
+            node->isPath = false;
             node->direction = NONE;
             map[i][j] = *node;
-
-            nodesByPathValue[nodeIndex] = *node;
         }
     }
 
@@ -210,11 +214,29 @@ node_t* currentNode = &map[mapHeight - 1][mapWidth - 1];
     }
     for (int i = 0; i < mapHeight; i++)
     {
-    for (int j = 0; j < mapWidth; j++)
+        for (int j = 0; j < mapWidth; j++)
         {
-            if (map[i][j].isPath)
+            node_t node = map[i][j];
+            if (node.isPath)
             {
-                printf("X");
+                //switch (node.direction)
+                //{
+                //    case NORTH:
+                //        printf("N");
+                //        break;
+                //    case EAST:
+                //        printf("E");
+                //        break;
+                //    case SOUTH:
+                //        printf("S");
+                //        break;
+                //    case WEST:
+                //        printf("W");
+                //        break;
+                //    default:
+                        printf("X");
+                //        break;
+                //}
             }
             else
             {
