@@ -1,21 +1,34 @@
+#include <stdio.h>
 #include <stdbool.h>
-
-typedef struct
-{
-    int directionX, directionY;
+#include <stdlib.h>
+typedef struct direction {
+    int x;
+    int y;
 } direction_t;
 
-typedef struct node_t node_t;
-struct node_t
-{
-    int mapX, mapY;
-    int coolingValue;
+typedef struct node {
+    int x, y;
+    int heatLoss;
     int totalHeatLoss;
-    direction_t direction;
-    int numSameDirection;
-};
+    direction_t directionTravelling;
+    int consecutiveDirectionCount;
+} node_t;
 
-bool IsSeenNode(node_t* queueOfSeenNodes, int queueOfSeenNodesSize, node_t* node);
-void Heapify(node_t* arr, int n, int i);
-void InsertToPQ(node_t* arr, int* n, node_t* key);
-void DeleteFromPQ(node_t* tree, int* n, int i);
+node_t* pq;
+int pqSize;
+
+bool IsEmpty();
+
+void InitializePQ();
+
+void Enqueue(node_t node);
+
+node_t Dequeue();
+
+void Swap(int index1, int index2);
+
+void BubbleUp(int index);
+
+void BubbleDown(int index);
+
+void PrintPQ();
