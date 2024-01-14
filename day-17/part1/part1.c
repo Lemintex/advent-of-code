@@ -47,12 +47,21 @@ node_t GetMinFromPQ()
             minNode = pq[i];
         }
     }
-
+    printf("PQ before: ");
+    for (int i = 0; i < pqSize; i++)
+    {
+    printf("%d ", pq[i].totalHeatLoss);
+    }
     for (int i = minIndex; i < pqSize; i++)
     {
         pq[i] = pq[i + 1];
     }
     pqSize--;
+    printf("\nPQ after: ");
+    for (int i = 0; i < pqSize; i++)
+    {
+    printf("%d ", pq[i].totalHeatLoss);
+    }
     //pq = (node_t*)realloc(pq, pqSize * sizeof(node_t));
     return minNode;
 }
@@ -196,7 +205,8 @@ printf("\n");
     printf("Total Heat Loss: %d\n", totalHeatLoss);
     map[0].previousNode = NULL;
     node_t* currentNode = &map[mapHeight * mapWidth - 1];
-    while (currentNode->x != 0 || currentNode->y != 0)
+    int c = 0;
+    while ((currentNode->x != 0 || currentNode->y != 0) && c++ < 1000)
     {
         currentNode->isPath = true;
         currentNode = currentNode->previousNode;
