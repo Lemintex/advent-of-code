@@ -7,6 +7,7 @@ typedef struct direction {
     int x;
     int y;
 } direction_t;
+typedef struct node node_t;
 
 typedef struct node {
     int x, y;
@@ -16,7 +17,7 @@ typedef struct node {
     int consecutiveDirectionCount;
 
     bool isPath;
-    struct node* previousNode;
+    node_t* previousNode;
 } node_t;
 
 node_t* pq;
@@ -88,6 +89,7 @@ int RunDijkstras()
 
     // add the starting node to the priority queue
     node_t startingNode = map[0];
+    map[0].previousNode = NULL;
     startingNode.totalHeatLoss = 0;
 
     AddToPQ(startingNode);
@@ -117,6 +119,7 @@ int RunDijkstras()
         // if not seen, add it to the queue of seen nodes
         AddSeenNode(currentNode);
 
+        // add the neighbors to the priority queue
         for (int i = 0; i < 4; i++)
         {
             int neighborX = currentNode.x + (i == 0) - (i == 1);
@@ -124,13 +127,26 @@ int RunDijkstras()
             
             int neighbourDirectionX = neighborX - currentNode.x;
             int neighbourDirectionY = neighborY - currentNode.y;
-            if (neighborX < 0 || neighborX >= mapWidth || neighborY < 0 || neighborY >= mapHeight)
-            {
-                continue;
-            }
+            // if (neighborX < 0 || neighborX >= mapWidth || neighborY < 0 || neighborY >= mapHeight)
+            // {
+            //     continue;
+            // }
 
-            if (neighbourDirectionX != currentNode.directionTravelling.x || neighbourDirectionY != currentNode.directionTravelling.y && (neighbourDirectionX != -currentNode.directionTravelling.x || neighbourDirectionY != -currentNode.directionTravelling.y))
-            {
+            // if (neighbourDirectionX == -currentNode.directionTravelling.x && neighbourDirectionY == -currentNode.directionTravelling.y)
+            // {
+            //     continue;
+            // }
+            // else if (neighbourDirectionX == currentNode.directionTravelling.x && neighbourDirectionY == currentNode.directionTravelling.y)
+            // {
+            //     currentNode.consecutiveDirectionCount++;
+            // }
+            // else
+            // {
+            //     currentNode.consecutiveDirectionCount = 0;
+            // }
+
+            //if (neighbourDirectionX != currentNode.directionTravelling.x || neighbourDirectionY != currentNode.directionTravelling.y && (neighbourDirectionX != -currentNode.directionTravelling.x || neighbourDirectionY != -currentNode.directionTravelling.y))
+            //{
                 map[neighborY * mapWidth + neighborX].previousNode = &map[currentNode.y * mapWidth + currentNode.x];
 
                 node_t newNode = map[neighborY * mapWidth + neighborX];
@@ -141,7 +157,7 @@ int RunDijkstras()
                 newNode.directionTravelling.y = neighbourDirectionY;
                 newNode.consecutiveDirectionCount = 0;
                 AddToPQ(newNode);
-            }
+            //}
         }
     }
 }
@@ -180,6 +196,11 @@ printf("\n");
     printf("Total Heat Loss: %d\n", totalHeatLoss);
     map[0].previousNode = NULL;
     node_t* currentNode = &map[mapHeight * mapWidth - 1];
+    while (currentNode->x != 0 || currentNode->y != 0)
+    {
+        currentNode->isPath = true;
+        currentNode = currentNode->previousNode;
+    }
 
     for (int i = 0; i < mapHeight; i++)
     {
@@ -199,3 +220,18 @@ printf("\n");
     }
     return 0;
 }
+
+//while the priority queue is not empty
+//    get the node with the lowest total heat loss from the priority queue
+
+//    if the node is the ending node, return the total heat loss
+
+//    if the node is already in the queue of seen nodes, skip it
+
+//    if not seen, add it to the queue of seen nodes so we don't process it again
+
+//    add the neighbors to the priority queue
+//        if the neighbor is the same direction as the current node
+//            increment the consecutive direction count if <3 and add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
+//        if the neighbor is not the opposite direction of the current node (left, right)
+//            add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
