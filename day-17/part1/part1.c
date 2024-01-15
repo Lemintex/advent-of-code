@@ -20,65 +20,25 @@ typedef struct node {
     node_t* previousNode;
 } node_t;
 
-node_t* pq;
-int pqSize = 0;
+node_t pq[1000];
+int pqCount = 0;
 
-node_t* seenNodes;
-int seenNodesSize = 0;
+node_t seenNodes[1000];
+int seenNodesCount = 0;
 
 node_t* map;
 int mapWidth = 0, mapHeight = 0;
 
-void AddToPQ(node_t node)
+void AddToSeenNodes(node_t* node)
 {
-    pqSize++;
-    pq[pqSize] = node;
+    seenNodes[seenNodesCount++] = *node;
 }
 
-node_t GetMinFromPQ()
+bool IsInSeenNodes(node_t* node)
 {
-    int minIndex = 0;
-    node_t minNode = pq[0];
-    for (int i = 0; i < pqSize; i++)
+    for (int i = 0; i < seenNodesCount; i++)
     {
-        if (pq[i].totalHeatLoss < minNode.totalHeatLoss)
-        {
-            minIndex = i;
-            minNode = pq[i];
-        }
-    }
-    printf("PQ before: ");
-    for (int i = 0; i < pqSize; i++)
-    {
-    printf("%d ", pq[i].totalHeatLoss);
-    }
-    for (int i = minIndex; i < pqSize; i++)
-    {
-        pq[i] = pq[i + 1];
-    }
-    pqSize--;
-    printf("\nPQ after: ");
-    for (int i = 0; i < pqSize; i++)
-    {
-    printf("%d ", pq[i].totalHeatLoss);
-    }
-    //pq = (node_t*)realloc(pq, pqSize * sizeof(node_t));
-    return minNode;
-}
-
-void AddSeenNode(node_t node)
-{
-    seenNodesSize += 1;
-    //seenNodes = (node_t*)realloc(seenNodes, seenNodesSize * sizeof(node_t));
-    seenNodes[seenNodesSize - 1] = node;
-}
-
-bool IsSeenNode(node_t node)
-{
-    for (int i = 0; i < seenNodesSize; i++)
-    {
-        node_t seenNode = seenNodes[i];
-        if (seenNode.x == node.x && seenNode.y == node.y && seenNode.directionTravelling.x == node.directionTravelling.x && seenNode.directionTravelling.y == node.directionTravelling.y && seenNode.consecutiveDirectionCount == node.consecutiveDirectionCount)
+        if (seenNodes[i].x == node->x && seenNodes[i].y == node->y)
         {
             return true;
         }
@@ -86,87 +46,96 @@ bool IsSeenNode(node_t node)
     return false;
 }
 
+void Enqueue(node_t* node)
+{
+    pq[pqCount++] = *node;
+}
+
+node_t Dequeue()
+{
+    int lowestHeatLoss = 999999;
+    int lowestHeatLossIndex = 0;
+    for (int i = 0; i < pqCount; i++)
+    {
+        if (pq[i].totalHeatLoss < lowestHeatLoss)
+        {
+            lowestHeatLoss = pq[i].totalHeatLoss;
+            lowestHeatLossIndex = i;
+        }
+    }
+    node_t node = pq[lowestHeatLossIndex];
+    for (int i = lowestHeatLossIndex; i < pqCount - 1; i++)
+    {
+        pq[i] = pq[i + 1];
+    }
+    pqCount--;
+    return node;
+}
+
 int RunDijkstras()
 {
-    // create a priority queue
-    pq = (node_t*)malloc(10000 * sizeof(node_t));
-    pqSize = 0;
-
-    // create a queue of seen nodes
-    seenNodes = (node_t*)malloc(10000 * sizeof(node_t));
-    seenNodesSize = 0;
-
-    // add the starting node to the priority queue
-    node_t startingNode = map[0];
-    map[0].previousNode = NULL;
-    startingNode.totalHeatLoss = 0;
-
-    AddToPQ(startingNode);
-
-    while (pqSize > 0)
+    node_t* startNode = &map[0];
+    startNode->totalHeatLoss = 0;
+    while (pqCount > 0)
     {
-        // get the node with the lowest total heat loss
-        node_t currentNode = GetMinFromPQ();
-
-        if (currentNode.x < 0 || currentNode.x > mapWidth || currentNode.y < 0 || currentNode.y > mapHeight)
-        {
-            continue;
-        }
+        // get the node with the lowest total heat loss from the priority queue
+        node_t node = Dequeue();
 
         // if the node is the ending node, return the total heat loss
-        if (currentNode.x == mapWidth - 1 && currentNode.y == mapHeight - 1)
+        if (node.x == mapWidth - 1 && node.y == mapHeight - 1)
         {
-            return currentNode.totalHeatLoss;
+            return node.totalHeatLoss;
         }
 
         // if the node is already in the queue of seen nodes, skip it
-        if (IsSeenNode(currentNode))
+        if (IsInSeenNodes(&node))
         {
             continue;
         }
 
-        // if not seen, add it to the queue of seen nodes
-        AddSeenNode(currentNode);
+        // if not seen, add it to the queue of seen nodes so we don't process it again
+        AddToSeenNodes(&node);
 
-        // add the neighbors to the priority queue
+        // for each neighbor
         for (int i = 0; i < 4; i++)
         {
-            int neighborX = currentNode.x + (i == 0) - (i == 1);
-            int neighborY = currentNode.y + (i == 2) - (i == 3);
-            
-            int neighbourDirectionX = neighborX - currentNode.x;
-            int neighbourDirectionY = neighborY - currentNode.y;
-            // if (neighborX < 0 || neighborX >= mapWidth || neighborY < 0 || neighborY >= mapHeight)
-            // {
-            //     continue;
-            // }
+            node_t* neighbor = NULL;
+            switch (i)
+            {
+                case 0:
+                    if (node.x > 0)
+                    {
+                        neighbor = &map[(node.y * mapWidth) + (node.x - 1)];
+                        neighbor->directionTravelling = (direction_t){ -1, 0 };
+                    }
+                    break;
+                case 1:
+                    if (node.x < mapWidth - 1)
+                    {
+                        neighbor = &map[(node.y * mapWidth) + (node.x + 1)];
+                        neighbor->directionTravelling = (direction_t){ 1, 0 };
+                    }
+                    break;
+                case 2:
+                    if (node.y > 0)
+                    {
+                        neighbor = &map[((node.y - 1) * mapWidth) + node.x];
+                        neighbor->directionTravelling = (direction_t){ 0, -1 };
+                    }
+                    break;
+                case 3:
+                    if (node.y < mapHeight - 1)
+                    {
+                        neighbor = &map[((node.y + 1) * mapWidth) + node.x];
+                        neighbor->directionTravelling = (direction_t){ 0, 1 };
+                    }
+                    break;
+            }
 
-            // if (neighbourDirectionX == -currentNode.directionTravelling.x && neighbourDirectionY == -currentNode.directionTravelling.y)
-            // {
-            //     continue;
-            // }
-            // else if (neighbourDirectionX == currentNode.directionTravelling.x && neighbourDirectionY == currentNode.directionTravelling.y)
-            // {
-            //     currentNode.consecutiveDirectionCount++;
-            // }
-            // else
-            // {
-            //     currentNode.consecutiveDirectionCount = 0;
-            // }
-
-            //if (neighbourDirectionX != currentNode.directionTravelling.x || neighbourDirectionY != currentNode.directionTravelling.y && (neighbourDirectionX != -currentNode.directionTravelling.x || neighbourDirectionY != -currentNode.directionTravelling.y))
-            //{
-                map[neighborY * mapWidth + neighborX].previousNode = &map[currentNode.y * mapWidth + currentNode.x];
-
-                node_t newNode = map[neighborY * mapWidth + neighborX];
-                newNode.x = neighborX;
-                newNode.y = neighborY;
-                newNode.totalHeatLoss = currentNode.totalHeatLoss + newNode.heatLoss;
-                newNode.directionTravelling.x = neighbourDirectionX;
-                newNode.directionTravelling.y = neighbourDirectionY;
-                newNode.consecutiveDirectionCount = 0;
-                AddToPQ(newNode);
-            //}
+            if (neighbor == NULL)
+            {
+                continue;
+            }
         }
     }
 }
@@ -195,40 +164,11 @@ int main()
             node->x = j;
             node->y = i;
             node->heatLoss = line[j] - '0';
-            printf("%d", node->heatLoss);
+            node->totalHeatLoss = 999999;
+            node->previousNode = NULL;
+            node->consecutiveDirectionCount = 0;
         }
-        printf("\n");
     }
-printf("\n");
-
-    int totalHeatLoss = RunDijkstras();
-    printf("Total Heat Loss: %d\n", totalHeatLoss);
-    map[0].previousNode = NULL;
-    node_t* currentNode = &map[mapHeight * mapWidth - 1];
-    int c = 0;
-    while ((currentNode->x != 0 || currentNode->y != 0) && c++ < 1000)
-    {
-        currentNode->isPath = true;
-        currentNode = currentNode->previousNode;
-    }
-
-    for (int i = 0; i < mapHeight; i++)
-    {
-        for (int j = 0; j < mapWidth; j++)
-        {
-            node_t node = map[i * mapWidth + j];
-            if (node.isPath)
-            {
-                printf("X");
-            }
-            else
-            {
-                printf("%d", node.heatLoss);
-            }
-        }
-        printf("\n");
-    }
-    return 0;
 }
 
 //while the priority queue is not empty
