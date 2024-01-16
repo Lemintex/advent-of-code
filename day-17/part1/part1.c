@@ -76,6 +76,7 @@ int RunDijkstras()
 {
     node_t* startNode = &map[0];
     startNode->totalHeatLoss = 0;
+    Enqueue(startNode);
     while (pqCount > 0)
     {
         // get the node with the lowest total heat loss from the priority queue
@@ -84,6 +85,29 @@ int RunDijkstras()
         // if the node is the ending node, return the total heat loss
         if (node.x == mapWidth - 1 && node.y == mapHeight - 1)
         {
+            printf("Found the end node!\n");
+            printf("Total heat loss: %d\n", node.totalHeatLoss);
+            node_t* previousNode = node.previousNode;
+            while (previousNode != NULL)
+            {
+                previousNode->isPath = true;
+                previousNode = previousNode->previousNode;
+            }
+            for (int i = 0; i < mapHeight; i++)
+            {
+                for (int j = 0; j < mapWidth; j++)
+                {
+                    if (map[i * mapWidth + j].isPath)
+                    {
+                        printf("X");
+                    }
+                    else
+                    {
+                    printf("%d", map[i * mapWidth + j].heatLoss);
+                    }
+                }
+                printf("\n");
+            }
             return node.totalHeatLoss;
         }
 
@@ -136,6 +160,10 @@ int RunDijkstras()
             {
                 continue;
             }
+            neighbor->totalHeatLoss = node.totalHeatLoss + neighbor->heatLoss;
+            neighbor->previousNode = &node;
+            map[neighbor->y * mapWidth + neighbor->x].previousNode = &map[node.y * mapWidth + node.x];
+            Enqueue(neighbor);
         }
     }
 }
@@ -169,6 +197,7 @@ int main()
             node->consecutiveDirectionCount = 0;
         }
     }
+    RunDijkstras();
 }
 
 //while the priority queue is not empty
