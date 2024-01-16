@@ -17,7 +17,7 @@ typedef struct node {
     int consecutiveDirectionCount;
 
     bool isPath;
-    node_t* previousNode;
+    int prevX, prevY;
 } node_t;
 
 node_t pq[1000];
@@ -76,6 +76,7 @@ int RunDijkstras()
 {
     node_t* startNode = &map[0];
     startNode->totalHeatLoss = 0;
+    startNode->isPath = true;
     Enqueue(startNode);
     while (pqCount > 0)
     {
@@ -85,30 +86,7 @@ int RunDijkstras()
         // if the node is the ending node, return the total heat loss
         if (node.x == mapWidth - 1 && node.y == mapHeight - 1)
         {
-            printf("Found the end node!\n");
-            printf("Total heat loss: %d\n", node.totalHeatLoss);
-            node_t* previousNode = node.previousNode;
-            while (previousNode != NULL)
-            {
-                previousNode->isPath = true;
-                previousNode = previousNode->previousNode;
-            }
-            for (int i = 0; i < mapHeight; i++)
-            {
-                for (int j = 0; j < mapWidth; j++)
-                {
-                    if (map[i * mapWidth + j].isPath)
-                    {
-                        printf("X");
-                    }
-                    else
-                    {
-                    printf("%d", map[i * mapWidth + j].heatLoss);
-                    }
-                }
-                printf("\n");
-            }
-            return node.totalHeatLoss;
+
         }
 
         // if the node is already in the queue of seen nodes, skip it
@@ -160,9 +138,55 @@ int RunDijkstras()
             {
                 continue;
             }
+            if (neighbor->x == mapWidth - 1 && neighbor->y == mapHeight - 1)
+            {
+                printf("Found the end node!\n");
+                neighbor->prevX = node.x;
+                neighbor->prevY = node.y;
+                neighbor->isPath = true;
+                neighbor->totalHeatLoss = node.totalHeatLoss + neighbor->heatLoss;
+                printf("Total heat loss: %d\n", neighbor->totalHeatLoss);
+                node_t* previousNode = neighbor;
+                while (previousNode->prevX != -1 && previousNode->prevY != -1)
+                {
+                    previousNode->isPath = true;
+                    previousNode = &map[previousNode->prevY * mapWidth + previousNode->prevX];
+                }
+                //for (int i = 0; i < mapHeight; i++)
+                //{
+                //    for (int j = 0; j < mapWidth; j++)
+                //    {
+                //        if (map[i * mapWidth + j].isPath)
+                //        {
+                //            printf("%d\n", map[i * mapWidth + j].heatLoss);
+                //        }
+                //    }
+                //    printf("\n");
+                //}
+                for (int i = 0; i < mapHeight; i++)
+                {
+                    for (int j = 0; j < mapWidth; j++)
+                    {
+                        if (map[i * mapWidth + j].isPath)
+                        {
+                            printf("X");
+                        }
+                        else
+                        {
+                        printf("%d", map[i * mapWidth + j].heatLoss);
+                        }
+                    }
+                    printf("\n");
+                }
+                return node.totalHeatLoss;
+            }
+            if (IsInSeenNodes(neighbor))
+            {
+                continue;
+            }
             neighbor->totalHeatLoss = node.totalHeatLoss + neighbor->heatLoss;
-            neighbor->previousNode = &node;
-            map[neighbor->y * mapWidth + neighbor->x].previousNode = &map[node.y * mapWidth + node.x];
+            neighbor->prevX = node.x;
+            neighbor->prevY = node.y;
             Enqueue(neighbor);
         }
     }
@@ -193,8 +217,10 @@ int main()
             node->y = i;
             node->heatLoss = line[j] - '0';
             node->totalHeatLoss = 999999;
-            node->previousNode = NULL;
             node->consecutiveDirectionCount = 0;
+            node->isPath = false;
+            node->prevX = -1;
+            node->prevY = -1;
         }
     }
     RunDijkstras();
