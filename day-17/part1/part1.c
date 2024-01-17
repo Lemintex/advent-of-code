@@ -84,10 +84,10 @@ int RunDijkstras()
         node_t node = Dequeue();
 
         // if the node is the ending node, return the total heat loss
-        if (node.x == mapWidth - 1 && node.y == mapHeight - 1)
-        {
+        //if (node.x == mapWidth - 1 && node.y == mapHeight - 1)
+        //{
 
-        }
+        //}
 
         // if the node is already in the queue of seen nodes, skip it
         if (IsInSeenNodes(&node))
