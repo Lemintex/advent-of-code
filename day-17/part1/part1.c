@@ -136,7 +136,7 @@ int RunDijkstras()
             if (neighbor->x == mapWidth - 1 && neighbor->y == mapHeight - 1)
             {
                 printf("Found the end node!\n");
-                neighbor->heatLoss += neighbor->heatLoss;
+                neighbor->heatLoss += node.heatLoss;
                 printf("Total heat loss: %d\n", neighbor->heatLoss);
                 node_t* previousNode = neighbor;
                 return node.heatLoss;
@@ -145,7 +145,7 @@ int RunDijkstras()
             {
                 continue;
             }
-            neighbor->heatLoss += neighbor->heatLoss;
+            neighbor->heatLoss += node.heatLoss;
             Enqueue(neighbor);
         }
     }
