@@ -11,13 +11,9 @@ typedef struct node node_t;
 
 typedef struct node {
     int x, y;
+    direction_t facing;
+    int stepsInSameDirection;
     int heatLoss;
-    int totalHeatLoss;
-    direction_t directionTravelling;
-    int consecutiveDirectionCount;
-
-    bool isPath;
-    int prevX, prevY;
 } node_t;
 
 node_t pq[1000];
@@ -57,9 +53,9 @@ node_t Dequeue()
     int lowestHeatLossIndex = 0;
     for (int i = 0; i < pqCount; i++)
     {
-        if (pq[i].totalHeatLoss < lowestHeatLoss)
+        if (pq[i].heatLoss < lowestHeatLoss)
         {
-            lowestHeatLoss = pq[i].totalHeatLoss;
+            lowestHeatLoss = pq[i].heatLoss;
             lowestHeatLossIndex = i;
         }
     }
@@ -75,8 +71,7 @@ node_t Dequeue()
 int RunDijkstras()
 {
     node_t* startNode = &map[0];
-    startNode->totalHeatLoss = 0;
-    startNode->isPath = true;
+    startNode->heatLoss = 0;
     Enqueue(startNode);
     while (pqCount > 0)
     {
@@ -108,28 +103,28 @@ int RunDijkstras()
                     if (node.x > 0)
                     {
                         neighbor = &map[(node.y * mapWidth) + (node.x - 1)];
-                        neighbor->directionTravelling = (direction_t){ -1, 0 };
+                        neighbor->facing = (direction_t){ -1, 0 };
                     }
                     break;
                 case 1:
                     if (node.x < mapWidth - 1)
                     {
                         neighbor = &map[(node.y * mapWidth) + (node.x + 1)];
-                        neighbor->directionTravelling = (direction_t){ 1, 0 };
+                        neighbor->facing = (direction_t){ 1, 0 };
                     }
                     break;
                 case 2:
                     if (node.y > 0)
                     {
                         neighbor = &map[((node.y - 1) * mapWidth) + node.x];
-                        neighbor->directionTravelling = (direction_t){ 0, -1 };
+                        neighbor->facing = (direction_t){ 0, -1 };
                     }
                     break;
                 case 3:
                     if (node.y < mapHeight - 1)
                     {
                         neighbor = &map[((node.y + 1) * mapWidth) + node.x];
-                        neighbor->directionTravelling = (direction_t){ 0, 1 };
+                        neighbor->facing  = (direction_t){ 0, 1 };
                     }
                     break;
             }
@@ -141,52 +136,16 @@ int RunDijkstras()
             if (neighbor->x == mapWidth - 1 && neighbor->y == mapHeight - 1)
             {
                 printf("Found the end node!\n");
-                neighbor->prevX = node.x;
-                neighbor->prevY = node.y;
-                neighbor->isPath = true;
-                neighbor->totalHeatLoss = node.totalHeatLoss + neighbor->heatLoss;
-                printf("Total heat loss: %d\n", neighbor->totalHeatLoss);
+                neighbor->heatLoss += neighbor->heatLoss;
+                printf("Total heat loss: %d\n", neighbor->heatLoss);
                 node_t* previousNode = neighbor;
-                while (previousNode->prevX != -1 && previousNode->prevY != -1)
-                {
-                    previousNode->isPath = true;
-                    previousNode = &map[previousNode->prevY * mapWidth + previousNode->prevX];
-                }
-                //for (int i = 0; i < mapHeight; i++)
-                //{
-                //    for (int j = 0; j < mapWidth; j++)
-                //    {
-                //        if (map[i * mapWidth + j].isPath)
-                //        {
-                //            printf("%d\n", map[i * mapWidth + j].heatLoss);
-                //        }
-                //    }
-                //    printf("\n");
-                //}
-                for (int i = 0; i < mapHeight; i++)
-                {
-                    for (int j = 0; j < mapWidth; j++)
-                    {
-                        if (map[i * mapWidth + j].isPath)
-                        {
-                            printf("X");
-                        }
-                        else
-                        {
-                        printf("%d", map[i * mapWidth + j].heatLoss);
-                        }
-                    }
-                    printf("\n");
-                }
-                return node.totalHeatLoss;
+                return node.heatLoss;
             }
             if (IsInSeenNodes(neighbor))
             {
                 continue;
             }
-            neighbor->totalHeatLoss = node.totalHeatLoss + neighbor->heatLoss;
-            neighbor->prevX = node.x;
-            neighbor->prevY = node.y;
+            neighbor->heatLoss += neighbor->heatLoss;
             Enqueue(neighbor);
         }
     }
