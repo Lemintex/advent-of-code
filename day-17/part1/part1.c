@@ -175,11 +175,6 @@ int main()
             node->x = j;
             node->y = i;
             node->heatLoss = line[j] - '0';
-            node->totalHeatLoss = 999999;
-            node->consecutiveDirectionCount = 0;
-            node->isPath = false;
-            node->prevX = -1;
-            node->prevY = -1;
         }
     }
     RunDijkstras();
