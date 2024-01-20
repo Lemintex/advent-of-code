@@ -7,13 +7,16 @@ typedef struct direction {
     int x;
     int y;
 } direction_t;
-typedef struct node node_t;
 
 typedef struct node {
     int x, y;
+    int initialHeatLoss;
     direction_t facing;
     int stepsInSameDirection;
     int heatLoss;
+
+    int prevX, prevY;
+    bool ispartOfPath;
 } node_t;
 
 node_t pq[1000];
@@ -123,23 +126,65 @@ int RunDijkstras()
                     break;
             }
 
-            if (neighbor == NULL)
+            if (neighbor == NULL || (neighbor->facing.x == -node.facing.x && neighbor->facing.y == -node.facing.y) || IsInSeenNodes(neighbor))
             {
                 continue;
             }
+
+            // if the neighbor is the same direction as the current node
+            if (neighbor->facing.x == node.facing.x && neighbor->facing.y == node.facing.y)
+            {
+                // increment the consecutive direction count if <3 and add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
+                if (node.stepsInSameDirection < 3)
+                {
+                    neighbor->stepsInSameDirection = node.stepsInSameDirection + 1;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                neighbor->stepsInSameDirection = 0;
+            }
+
             if (neighbor->x == mapWidth - 1 && neighbor->y == mapHeight - 1)
             {
                 printf("Found the end node!\n");
                 neighbor->heatLoss += node.heatLoss;
+                neighbor->prevX = node.x;
+                neighbor->prevY = node.y;
                 printf("Total heat loss: %d\n", neighbor->heatLoss);
                 node_t* previousNode = neighbor;
+                while (previousNode->prevX != 0 || previousNode->prevY != 0)
+                {
+                    previousNode->ispartOfPath = true;
+                    printf("x: %d, y: %d, heatLoss: %d\n", previousNode->x, previousNode->y, previousNode->heatLoss);
+                    previousNode = &map[(previousNode->prevY * mapWidth) + previousNode->prevX];
+                }
+
+                for (int i = 0; i < mapHeight; i++)
+                {
+                    for (int j = 0; j < mapWidth; j++)
+                    {
+                        if (map[i * mapWidth + j].ispartOfPath)
+                        {
+                            printf("X");
+                        }
+                        else
+                        {
+                            printf("%d", map[i * mapWidth + j].initialHeatLoss);
+                        }
+                    }
+                    printf("\n");
+                }
                 return node.heatLoss;
             }
-            if (IsInSeenNodes(neighbor))
-            {
-                continue;
-            }
+
             neighbor->heatLoss += node.heatLoss;
+            neighbor->prevX = node.x;
+            neighbor->prevY = node.y;
             Enqueue(neighbor);
         }
     }
@@ -169,6 +214,8 @@ int main()
             node->x = j;
             node->y = i;
             node->heatLoss = line[j] - '0';
+            node->initialHeatLoss = node->heatLoss;
+            node->ispartOfPath = false;
         }
     }
     RunDijkstras();
