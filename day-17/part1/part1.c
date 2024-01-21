@@ -1,3 +1,5 @@
+// this needs entirely rewritten, it's a mess
+
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
@@ -19,10 +21,10 @@ typedef struct node {
     bool ispartOfPath;
 } node_t;
 
-node_t pq[1000];
+node_t pq[10000000];
 int pqCount = 0;
 
-node_t seenNodes[1000];
+node_t seenNodes[10000000];
 int seenNodesCount = 0;
 
 node_t* map;
@@ -33,11 +35,11 @@ void AddToSeenNodes(node_t* node)
     seenNodes[seenNodesCount++] = *node;
 }
 
-bool IsInSeenNodes(node_t* node)
+bool IsInSeenNodes(node_t node)
 {
     for (int i = 0; i < seenNodesCount; i++)
     {
-        if (seenNodes[i].x == node->x && seenNodes[i].y == node->y)
+        if (seenNodes[i].x == node.x && seenNodes[i].y == node.y && seenNodes[i].facing.x == node.facing.x && seenNodes[i].facing.y == node.facing.y && seenNodes[i].stepsInSameDirection == node.stepsInSameDirection)
         {
             return true;
         }
@@ -45,9 +47,9 @@ bool IsInSeenNodes(node_t* node)
     return false;
 }
 
-void Enqueue(node_t* node)
+void Enqueue(node_t node)
 {
-    pq[pqCount++] = *node;
+    pq[pqCount++] = node;
 }
 
 node_t Dequeue()
@@ -73,8 +75,9 @@ node_t Dequeue()
 
 int RunDijkstras()
 {
-    node_t* startNode = &map[0];
-    startNode->heatLoss = 0;
+    int hits = 0;
+    node_t startNode = map[0];
+    startNode.heatLoss = 0;
     Enqueue(startNode);
     while (pqCount > 0)
     {
@@ -82,7 +85,7 @@ int RunDijkstras()
         node_t node = Dequeue();
 
         // if the node is already in the queue of seen nodes, skip it
-        if (IsInSeenNodes(&node))
+        if (IsInSeenNodes(node))
         {
             continue;
         }
@@ -93,98 +96,69 @@ int RunDijkstras()
         // for each neighbor
         for (int i = 0; i < 4; i++)
         {
-            node_t* neighbor = NULL;
+            node_t neighbor = (node_t){ 0, 0, 0, (direction_t){ 0, 0 }, 0, 0, 0, 0, false };
             switch (i)
             {
                 case 0:
                     if (node.x > 0)
                     {
-                        neighbor = &map[(node.y * mapWidth) + (node.x - 1)];
-                        neighbor->facing = (direction_t){ -1, 0 };
+                        hits++;
+                    neighbor = map[(node.y * mapWidth) + (node.x - 1)];
+                        neighbor.facing = (direction_t){ -1, 0 };
                     }
                     break;
                 case 1:
                     if (node.x < mapWidth - 1)
                     {
-                        neighbor = &map[(node.y * mapWidth) + (node.x + 1)];
-                        neighbor->facing = (direction_t){ 1, 0 };
+                        neighbor = map[(node.y * mapWidth) + (node.x + 1)];
+                        neighbor.facing = (direction_t){ 1, 0 };
                     }
                     break;
                 case 2:
                     if (node.y > 0)
                     {
-                        neighbor = &map[((node.y - 1) * mapWidth) + node.x];
-                        neighbor->facing = (direction_t){ 0, -1 };
+                        neighbor = map[((node.y - 1) * mapWidth) + node.x];
+                        neighbor.facing = (direction_t){ 0, -1 };
                     }
                     break;
                 case 3:
                     if (node.y < mapHeight - 1)
                     {
-                        neighbor = &map[((node.y + 1) * mapWidth) + node.x];
-                        neighbor->facing  = (direction_t){ 0, 1 };
+                        neighbor = map[((node.y + 1) * mapWidth) + node.x];
+                        neighbor.facing  = (direction_t){ 0, 1 };
                     }
                     break;
             }
 
-            if (neighbor == NULL || (neighbor->facing.x == -node.facing.x && neighbor->facing.y == -node.facing.y) || IsInSeenNodes(neighbor))
+            if ((neighbor.x == -1 && neighbor.y == -1) || (neighbor.facing.x == -node.facing.x && neighbor.facing.y == -node.facing.y) || IsInSeenNodes(neighbor))
             {
                 continue;
             }
 
             // if the neighbor is the same direction as the current node
-            if (neighbor->facing.x == node.facing.x && neighbor->facing.y == node.facing.y)
+            if (neighbor.facing.x == node.facing.x && neighbor.facing.y == node.facing.y)
             {
                 // increment the consecutive direction count if <3 and add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
-                if (node.stepsInSameDirection < 3)
-                {
-                    neighbor->stepsInSameDirection = node.stepsInSameDirection + 1;
-                }
-                else
+                if (node.stepsInSameDirection >= 3)
                 {
                     continue;
                 }
+                neighbor.stepsInSameDirection = node.stepsInSameDirection + 1;
             }
             else
             {
-                neighbor->stepsInSameDirection = 0;
+                neighbor.stepsInSameDirection = 1;
             }
 
-            if (neighbor->x == mapWidth - 1 && neighbor->y == mapHeight - 1)
+            if (neighbor.x == mapWidth - 1 && neighbor.y == mapHeight - 1)
             {
                 printf("Found the end node!\n");
-                neighbor->heatLoss += node.heatLoss;
-                neighbor->prevX = node.x;
-                neighbor->prevY = node.y;
-                printf("Total heat loss: %d\n", neighbor->heatLoss);
-                node_t* previousNode = neighbor;
-                while (previousNode->prevX != 0 || previousNode->prevY != 0)
-                {
-                    previousNode->ispartOfPath = true;
-                    printf("x: %d, y: %d, heatLoss: %d\n", previousNode->x, previousNode->y, previousNode->heatLoss);
-                    previousNode = &map[(previousNode->prevY * mapWidth) + previousNode->prevX];
-                }
-
-                for (int i = 0; i < mapHeight; i++)
-                {
-                    for (int j = 0; j < mapWidth; j++)
-                    {
-                        if (map[i * mapWidth + j].ispartOfPath)
-                        {
-                            printf("X");
-                        }
-                        else
-                        {
-                            printf("%d", map[i * mapWidth + j].initialHeatLoss);
-                        }
-                    }
-                    printf("\n");
-                }
+                neighbor.heatLoss += node.heatLoss;
+                printf("Total heat loss: %d\n", neighbor.heatLoss);
                 return node.heatLoss;
             }
 
-            neighbor->heatLoss += node.heatLoss;
-            neighbor->prevX = node.x;
-            neighbor->prevY = node.y;
+            neighbor.heatLoss += node.heatLoss;
             Enqueue(neighbor);
         }
     }
@@ -220,18 +194,3 @@ int main()
     }
     RunDijkstras();
 }
-
-//while the priority queue is not empty
-//    get the node with the lowest total heat loss from the priority queue
-
-//    if the node is the ending node, return the total heat loss
-
-//    if the node is already in the queue of seen nodes, skip it
-
-//    if not seen, add it to the queue of seen nodes so we don't process it again
-
-//    add the neighbors to the priority queue
-//        if the neighbor is the same direction as the current node
-//            increment the consecutive direction count if <3 and add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
-//        if the neighbor is not the opposite direction of the current node (left, right)
-//            add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
