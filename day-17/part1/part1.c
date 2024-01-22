@@ -1,4 +1,4 @@
-// this needs entirely rewritten, it's a mess
+// this needs entirely rewritten, it's a mess and takes 4 minutes to run
 
 #include <stdio.h>
 #include <stdlib.h> 
