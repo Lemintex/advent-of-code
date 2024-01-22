@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define MAX_LINE_LENGTH 256
 #define MAX_SPRINGS 100
@@ -14,6 +15,50 @@ typedef struct
 } springs_t;
 
 springs_t* springs;
+
+void RemoveConsecutivePoints()
+{
+    for (int i = 0; i < sizeof(springs); i++)
+    {
+        bool start = false, end = false, point = false;
+        for (int j = 0; j < sizeof(springs[i].springs); j++)
+        {
+            switch (springs[i].springs[j])
+            {
+                case '.':
+                    if (!point && !start && !end)
+                    {
+                        springs[i].springs[j] = '.';
+                    }
+                    point = true;
+                    break;
+                
+                case '#':
+                    springs[i].springs[j] = '#';
+                    point = false;
+                    break;
+                
+                case '?':
+                    springs[i].springs[j] = '?';
+                    point = false;
+                    break;
+
+                case '\0':
+                    springs[i].springs[j] = '\0';
+                    break;
+            }
+        }
+    printf("%s\n", springs[i].springs);
+    }
+}
+
+int CalculateSpringArrangments()
+{
+    int arrangements = 0;
+
+    return arrangements;
+}
+
 int main()
 {
     FILE* input = fopen("../input.txt", "r");
@@ -47,8 +92,7 @@ int main()
         {
             int* temp = realloc(springs[i].configuration, (l + 1) * sizeof(int));
             if (temp == NULL) {
-                // handle the error by freeing previously allocated memory and returning
-                free(springs[i].configuration);
+                // handle the error by not handling the error and just exiting
                 return 0;
             }
             springs[i].configuration = temp;
@@ -62,4 +106,5 @@ int main()
         springs[i].springGroups = l;
     }
     printf("Done\n");
+    RemoveConsecutivePoints();
 }

@@ -14,6 +14,7 @@ typedef struct {
 
 char map[MAP_SIZE][MAP_SIZE] = {0};
 symbol_t symbols[MAX] = {0};
+    int stars = 0;
 
 bool IsTouchingSymbol(int x, int y)
 {
@@ -22,7 +23,8 @@ bool IsTouchingSymbol(int x, int y)
             if (xIndex == x && yIndex == y) continue;
             if (xIndex < 0 || xIndex >= MAP_SIZE || yIndex < 0 || yIndex >= MAP_SIZE) continue;
             char c = map[yIndex][xIndex];
-            if (c != '.' && !(c >= '0' && c <= '9')) {
+            if (c == '*') {
+                stars++;
                 return true;
             }
         }
@@ -79,7 +81,7 @@ void CheckMap()
             }
         }
     }
-    printf("Total: %d", total);
+    printf("Total: %d", stars);
 }
 
 int main()

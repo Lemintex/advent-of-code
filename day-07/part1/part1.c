@@ -69,13 +69,16 @@ void ScoreCards()
                     break;
                 }
             }
-            if (unique)
+            if (unique && h.hand[j] != 1)
             {
                 tracker[numUnique].card = h.hand[j];
                 tracker[numUnique].num = 1;
                 numUnique++;
             }
-            
+        }
+        if (numUnique == 0)
+        {
+            numUnique = 1;
         }
         if (numUnique == 5)
         {
@@ -118,9 +121,9 @@ void ScoreCards()
     int total = 0;
     for (int i = 0; i < handCount; i++)
     {
-       printf("%d\n", hands[i].bid);
-       printf("%d %d %d %d %d\n", hands[i].hand[0], hands[i].hand[1], hands[i].hand[2], hands[i].hand[3], hands[i].hand[4]);
-       printf("%d\n", hands[i].strength);
+       printf("Hand: %d %d %d %d %d\n", hands[i].hand[0], hands[i].hand[1], hands[i].hand[2], hands[i].hand[3], hands[i].hand[4]);
+       //printf("Strength: %d\n", hands[i].strength);
+       
        total += hands[i].bid * (i+1);
     }
     printf("%d\n", total);
@@ -141,7 +144,7 @@ int main()
             if (line[i] == 'A') hand[i] = 14;
             else if (line[i] == 'K') hand[i] = 13;
             else if (line[i] == 'Q') hand[i] = 12;
-            else if (line[i] == 'J') hand[i] = 11;
+            else if (line[i] == 'J') hand[i] = 1; // jokers are weak... why so serious?
             else if (line[i] == 'T') hand[i] = 10;
             else hand[i] = line[i] - '0';
         }
