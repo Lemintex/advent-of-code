@@ -136,10 +136,10 @@ int RunDijkstras()
             }
 
             // if the neighbor is the same direction as the current node
-            if (neighbor.facing.x == node.facing.x && neighbor.facing.y == node.facing.y)
+            if (neighbor.facing.x == node.facing.x && neighbor.facing.y == node.facing.y || node.x == 0 && node.y == 0)
             {
                 // increment the consecutive direction count if <3 and add the neighbor to the priority queue with the total heat loss of the current node + the heat loss of the neighbor
-                if (node.stepsInSameDirection >= 10 || node.stepsInSameDirection < 4)
+                if (node.stepsInSameDirection >= 10)
                 {
                     continue;
                 }
