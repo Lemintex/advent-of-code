@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
-char** map;
+char map[400][400];
 
 int main()
 {
+    int minX = 0, minY = 0;
     int maxX = 0, maxY = 0;
     int x = 0, y = 0;
 
@@ -13,6 +15,14 @@ int main()
 
     // big char array to hold the line
     char line[256];
+
+    for (int i = 0; i < 400; i++)
+    {
+        for (int j = 0; j < 400; j++)
+        {
+            map[i][j] = '.';
+        }
+    }
 
     while (fgets(line, sizeof(line), input))
     {
@@ -34,18 +44,21 @@ int main()
                 y += atoi(&line[2]);
                 break;
         }
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
         if (x > maxX) maxX = x;
         if (y > maxY) maxY = y;
     }
+    printf("minX: %d, minY: %d, maxX: %d, maxY: %d\n", minX, minY, maxX, maxY);
     rewind(input);
-    map = (char**)malloc((maxY + 1) * sizeof(char*));
-    for (int i = 0; i < maxY + 1; i++)
-    {
-        map[i] = (char*)malloc((maxX + 1) * sizeof(char));
-        memset(map[i], '.', maxX + 1);
-    }
+//    map = (char**)malloc((maxY + 1) - minY * sizeof(char*));
+//    for (int i = 0; i < -minY + maxY + 1; i++)
+//    {
+//        map[i] = (char*)malloc((maxX + 1) * sizeof(char));
+//        memset(map[i], '.', maxX + 1);
+//    }
 
-    x = 0, y = 0;
+    x = 0, y = -minY;
     while (fgets(line, sizeof(line), input))
     {
         switch (line[0])
@@ -83,7 +96,7 @@ int main()
                 break;
         }
     }
-    for (int i = 0; i < maxY + 1; i++)
+    for (int i = 0; i < -minY + maxY + 1; i++)
     {
         for (int j = 0; j < maxX + 1; j++)
         {
@@ -91,6 +104,19 @@ int main()
         }
         printf("\n");
     }
+    int total = 0;
+    for (int i = 0; i < maxY + 1; i++)
+    {
+        bool inside = false;
+        for (int j = 0; j < maxX + 1; j++)
+        {
+            if (map[i][j] == '#')
+            {
+                total++;
+            }
+        }
+    }
+    printf("Total: %d\n", total);
     fclose(input);
     return 0;
 }
