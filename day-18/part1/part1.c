@@ -3,7 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-char map[400][400];
+#define MAP_SIZE 410
+char map[MAP_SIZE][MAP_SIZE];
 
 int main()
 {
@@ -16,9 +17,9 @@ int main()
     // big char array to hold the line
     char line[256];
 
-    for (int i = 0; i < 410; i++)
+    for (int i = 0; i < MAP_SIZE; i++)
     {
-        for (int j = 0; j < 410; j++)
+        for (int j = 0; j < MAP_SIZE; j++)
         {
             map[i][j] = '.';
         }
@@ -49,14 +50,7 @@ int main()
         if (x > maxX) maxX = x;
         if (y > maxY) maxY = y;
     }
-    printf("minX: %d, minY: %d, maxX: %d, maxY: %d\n", minX, minY, maxX, maxY);
     rewind(input);
-//    map = (char**)malloc((maxY + 1) - minY * sizeof(char*));
-//    for (int i = 0; i < -minY + maxY + 1; i++)
-//    {
-//        map[i] = (char*)malloc((maxX + 1) * sizeof(char));
-//        memset(map[i], '.', maxX + 1);
-//    }
 
     x = -minX, y = -minY;
     while (fgets(line, sizeof(line), input))
@@ -101,10 +95,6 @@ int main()
     for (int i = 0; i < -minY + maxY + 1; i++)
     {
         bool inside = false;
-        if (map[i][0] == '#')
-        {
-            inside = true;
-        }
         
         for (int j = 0; j < -minX + maxX + 1; j++)
         {
@@ -124,26 +114,24 @@ int main()
                     inside = !inside;
                 }
             }
-            // else if (inside)
-            // {
-            //     map[i][j] = 'X';
-            // }
+            else if (inside)
+            {
+                total++;
+                map[i][j] = 'X';
+            }
         }
     }
-    FILE* output = fopen("../output.txt", "w");
+    fclose(input);
+    FILE* output = fopen("output.txt", "w");
 
-        for (int i = 0; i < -minY + maxY + 1; i++)
+    for (int i = 0; i < -minY + maxY + 1; i++)
     {
         for (int j = 0; j < -minX + maxX + 1; j++)
         {
             fprintf(output, "%c", map[i][j]);
-            printf("%c", map[i][j]);
         }
         fprintf(output, "\n");
-        printf("\n");
     }
     printf("Total: %d\n", total);
-    fclose(input);
     return 0;
 }
-//40453 is too low
