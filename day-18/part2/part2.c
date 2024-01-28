@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define LENGTH 14
+#define LENGTH 746
 typedef struct point
 {
     long int x;
@@ -23,50 +23,72 @@ int main()
     // big char array to hold the line
     char line[256];
     int pointIndex = 0;
-
+    long int perimeter = 0;
     while (fgets(line, sizeof(line), input))
     {
         int length = 0;
-        char* c = strchr(line, '#');
-        c++;
-        for (int i = 0; i < 5; i++)
+        // test
+        length += atoi(&line[2]);
+        perimeter += length;
+        switch (line[0])
         {
-            int num = 0;
-            if (c[i] >= '0' && c[i] <= '9')
-            {
-                num = c[i] - '0';
-            }
-            else if (c[i] >= 'a' && c[i] <= 'f')
-            {
-                num = c[i] - 'a' + 10;
-            }
-            length *= 16;
-            length += num; 
-            printf("%c", c[i]);
-        }
-        printf(" %c", c[5]);
-        switch (c[5])
-        {
-            case '0': // right
+            case 'R': // right
                 x += length;
                 break;
 
-            case '2': // left
+            case 'L': // left
                 x -= length;
                 break;
 
-            case '3': // up
+            case 'U': // up
                 y -= length;
                 break;
 
-            case '1': // down
+            case 'D': // down
                 y += length;
                 break;
         }
         points[pointIndex++] = (point_t){x, y};
+        // char* c = strchr(line, '#');
+        // c++;
+        // for (int i = 0; i < 5; i++)
+        // {
+        //     int num = 0;
+        //     if (c[i] >= '0' && c[i] <= '9')
+        //     {
+        //         num = c[i] - '0';
+        //     }
+        //     else if (c[i] >= 'a' && c[i] <= 'f')
+        //     {
+        //         num = c[i] - 'a' + 10;
+        //     }
+        //     length *= 16;
+        //     length += num; 
+        //     printf("%c", c[i]);
+        // }
+        // printf(" %c", c[5]);
+        // switch (c[5])
+        // {
+        //     case '0': // right
+        //         x += length;
+        //         break;
 
-        printf(" %d\n", length);
-        printf("\n");
+        //     case '2': // left
+        //         x -= length;
+        //         break;
+
+        //     case '3': // up
+        //         y -= length;
+        //         break;
+
+        //     case '1': // down
+        //         y += length;
+        //         break;
+        // }
+        // points[pointIndex++] = (point_t){x, y};
+
+        // printf(" %d\n", length);
+        // printf("\n");
         if (x < minX) minX = x;
         if (y < minY) minY = y;
         if (x > maxX) maxX = x;
@@ -95,16 +117,16 @@ int main()
     printf("Clockwise area: %ld\n", area);
 
     area = 0;
-    long int perimeter = 0;
-    for (int i = 0; i < LENGTH - 1; i++)
+    for (int i = 0; i < LENGTH; i++)
     {
         area -= points[i].x * points[(i+1)%LENGTH].y;
         area += points[i].y * points[(i+1)%LENGTH].x;
-        perimeter += labs(points[i].x - points[(i+1)%LENGTH].x) + labs(points[i].y - points[(i+1)%LENGTH].y);
     }
     area = labs(area) / 2;
-    printf("Counter clockwise area: %ld\n", area);
-    printf("Grid points: %ld\n", area + perimeter - 1);
+    printf("Perimeter: %ld\n", perimeter);
+    long int interior = area - perimeter / 2 + 1;
+    printf("Counter clockwise area: %ld\n", interior);
+    printf("Total area: %ld\n", interior + perimeter);
     return 0;
 }
 // 1048840725 is too low
