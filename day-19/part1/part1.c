@@ -32,6 +32,7 @@ int main()
 
     while (fgets(line, sizeof(line), input))
     {
+        char* lineCopy = strdup(line);
         if (readingInstructions)
         {
             if (line[0] == '\n')
@@ -46,16 +47,28 @@ int main()
             workflow.name = name;
             workflow.ruleCount = 0;
 
-            // get each rule
-            while(true)
+            int ruleCount = 1;
+            for (int i = 0; i < strlen(lineCopy); i++)
             {
-               char* rule = strtok(NULL, ","); 
-               printf("Rule: %s\n", rule);
-               if (rule == NULL)
-               {
-                   break;
-               }
+                if (lineCopy[i] == ',')
+                {
+                    ruleCount++;
+                }
             }
+            // get each rule
+            for (int i = 0; i < ruleCount - 1; i++)
+            {
+                char* rule = strtok(NULL, ","); 
+                printf("Rule: %s\n", rule);
+                char instructionType = rule[0];
+                printf("Instruction type: %c\n", instructionType);
+                char operator = rule[1];
+                printf("Operator: %c\n", operator);
+                int value = atoi(&rule[2]);
+                printf("Value: %d\n", value);
+            }
+            printf("Rule count: %d\n", ruleCount);
+            printf( "Final rule: %s\n", strtok(NULL, "}"));
             printf("%s\n", name);
         }
         else
