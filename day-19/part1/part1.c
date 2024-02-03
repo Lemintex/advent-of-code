@@ -19,6 +19,13 @@ typedef struct workflow
     int ruleCount;
 } workflow_t;
 
+typedef struct part
+{
+    int x, m, a, s;
+} part_t;
+
+workflow_t* workflows;
+part_t* parts;
 
 int main()
 {
@@ -32,6 +39,27 @@ int main()
 
     while (fgets(line, sizeof(line), input))
     {
+        if (readingInstructions)
+        {
+            if (line[0] == '\n')
+            {
+                readingInstructions = false;
+                continue;
+            }
+            instructionCount++;
+        }
+        else
+        {
+            partCount++;
+        }
+    }
+    rewind(input);
+
+    workflows = (workflow_t*)malloc(instructionCount * sizeof(workflow_t));
+    parts = (part_t*)malloc(partCount * sizeof(part_t));
+    
+    while (fgets(line, sizeof(line), input))
+    {
         char* lineCopy = strdup(line);
         if (readingInstructions)
         {
@@ -41,12 +69,9 @@ int main()
                 continue;
             }
             // read instruction
-            instructionCount++;
             char* name = strtok(line, "{");
-            workflow_t workflow;
-            workflow.name = name;
-            workflow.ruleCount = 0;
 
+            // get the rules
             int ruleCount = 1;
             for (int i = 0; i < strlen(lineCopy); i++)
             {
@@ -55,7 +80,7 @@ int main()
                     ruleCount++;
                 }
             }
-            // get each rule
+                        // get each rule
             for (int i = 0; i < ruleCount - 1; i++)
             {
                 char* rule = strtok(NULL, ","); 
@@ -70,15 +95,35 @@ int main()
             printf("Rule count: %d\n", ruleCount);
             printf( "Final rule: %s\n", strtok(NULL, "}"));
             printf("%s\n", name);
+            workflow_t workflow;
+            workflow.name = (char*)malloc(strlen(name) * sizeof(char));
+            workflow.rules = (rule_t*)malloc(ruleCount * sizeof(rule_t));
+            workflows[instructionCount++] = workflow;
+            workflow.name = name;
+            workflow.ruleCount = 0;
+
+
+
         }
         else
         {
             partCount++;
+            char* name = strtok(line, "{");
+            printf("Name: %s\n", name);
+            char* x = strtok(name, ",");
+            char* m = strtok(NULL, ",");
+            char* a = strtok(NULL, ",");
+            char* s = strtok(NULL, ",");
+            int intx = 0, intm = 0, inta = 0, ints = 0;
+            intx = atoi(&x[2]);
+            intm = atoi(&m[2]);
+            inta = atoi(&a[2]);
+            ints = atoi(&s[2]);
+            printf("X: %d, M: %d, A: %d, S: %d\n", intx, intm, inta, ints);
         }
-        // read instruction
-
-        // read machine part
     }
-    printf("Instruction count: %d\n", instructionCount);
-    printf("Part count: %d\n", partCount);    
+    for (int i = 0; i < partCount; i++)
+    {
+        printf("Part %d: X: %d, M: %d, A: %d, S: %d\n", i, parts[i].x, parts[i].m, parts[i].a, parts[i].s);
+    }
 }
