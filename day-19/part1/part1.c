@@ -5,7 +5,6 @@
 
 typedef struct rule
 {
-    char* workflowName;
     char type; // x, m, a, s
     char operator; // <, >
     int value;
@@ -15,7 +14,7 @@ typedef struct workflow
 {
     // store up to 4 rules
     char* name;
-    rule_t rules[4];
+    rule_t* rules;
     int ruleCount;
 } workflow_t;
 
@@ -58,9 +57,9 @@ int main()
     workflows = (workflow_t*)malloc(instructionCount * sizeof(workflow_t));
     parts = (part_t*)malloc(partCount * sizeof(part_t));
     
+    readingInstructions = true;
     while (fgets(line, sizeof(line), input))
     {
-        char* lineCopy = strdup(line);
         if (readingInstructions)
         {
             if (line[0] == '\n')
@@ -68,7 +67,9 @@ int main()
                 readingInstructions = false;
                 continue;
             }
-            // read instruction
+            // this is an instruction
+            char* lineCopy = strdup(line);
+
             char* name = strtok(line, "{");
 
             // get the rules
@@ -80,7 +81,9 @@ int main()
                     ruleCount++;
                 }
             }
+
                         // get each rule
+            rule_t rules[ruleCount];
             for (int i = 0; i < ruleCount - 1; i++)
             {
                 char* rule = strtok(NULL, ","); 
@@ -101,16 +104,13 @@ int main()
             workflows[instructionCount++] = workflow;
             workflow.name = name;
             workflow.ruleCount = 0;
-
-
-
         }
-        else
+        else // this is a part
         {
-            partCount++;
             char* name = strtok(line, "{");
             printf("Name: %s\n", name);
             char* x = strtok(name, ",");
+            printf("X: %s\n", x);
             char* m = strtok(NULL, ",");
             char* a = strtok(NULL, ",");
             char* s = strtok(NULL, ",");
@@ -119,6 +119,8 @@ int main()
             intm = atoi(&m[2]);
             inta = atoi(&a[2]);
             ints = atoi(&s[2]);
+            parts[partCount] = (part_t){intx, intm, inta, ints};
+            partCount++;
             printf("X: %d, M: %d, A: %d, S: %d\n", intx, intm, inta, ints);
         }
     }
