@@ -15,22 +15,24 @@ typedef struct workflow {
   char *name;
   rule_t *rules;
   int ruleCount;
+  bool is_accepted;
 } workflow_t;
 
 typedef struct part {
   int x, m, a, s;
+  int part_rating;
 } part_t;
 
 workflow_t *workflows;
+int workflowCount = 0;
 part_t *parts;
+int partCount = 0;
 
 int main() {
   FILE *input = fopen("../input.txt", "r");
 
   // big char array to hold the line
   char line[256];
-  int instructionCount = 0;
-  int partCount = 0;
   bool readingInstructions = true;
 
   while (fgets(line, sizeof(line), input)) {
@@ -39,14 +41,14 @@ int main() {
         readingInstructions = false;
         continue;
       }
-      instructionCount++;
+      workflowCount++;
     } else {
       partCount++;
     }
   }
   rewind(input);
 
-  workflows = (workflow_t *)malloc(instructionCount * sizeof(workflow_t));
+  workflows = (workflow_t *)malloc(workflowCount * sizeof(workflow_t));
   parts = (part_t *)malloc(partCount * sizeof(part_t));
 
   readingInstructions = true;
@@ -107,17 +109,30 @@ int main() {
       intm = atoi(&m[2]);
       inta = atoi(&a[2]);
       ints = atoi(&s[2]);
-      parts[part_index++] = (part_t){intx, intm, inta, ints};
-      printf("X: %d, M: %d, A: %d, S: %d\n", intx, intm, inta, ints);
+      int part_rating = intx + intm + inta + ints;
+      parts[part_index++] = (part_t){intx, intm, inta, ints, part_rating};
+      printf("X: %d, M: %d, A: %d, S: %d | T: %d\n", intx, intm, inta, ints,
+             part_rating);
     }
   }
-  printf("Instruction count: %d\n", instructionCount);
+  printf("Instruction count: %d\n", workflowCount);
   for (int i = 0; i < instruction_index; i++) {
     printf("Instruction %d: %s\n", i, workflows[i].name);
   }
   printf("Part count: %d\n", part_index);
   for (int i = 0; i < partCount; i++) {
-    printf("Part %d: X: %d, M: %d, A: %d, S: %d\n", i, parts[i].x, parts[i].m,
-           parts[i].a, parts[i].s);
+    printf("Part %d: X: %d, M: %d, A: %d, S: %d, total: %d\n", i, parts[i].x,
+           parts[i].m, parts[i].a, parts[i].s, parts[i].part_rating);
   }
+}
+
+void handle_part(part_t part) {}
+
+workflow_t *get_workflow(char *name) {
+  for (int i = 0; i < workflowCount; i++) {
+    if (strcmp(workflows[i].name, name) == 0) {
+      return &workflows[i];
+    }
+  }
+  return NULL;
 }
