@@ -23,6 +23,8 @@ typedef struct part {
   int part_rating;
 } part_t;
 
+int organise_part(part_t *part);
+
 workflow_t *workflows;
 int workflowCount = 0;
 part_t *parts;
@@ -124,9 +126,15 @@ int main() {
     printf("Part %d: X: %d, M: %d, A: %d, S: %d, total: %d\n", i, parts[i].x,
            parts[i].m, parts[i].a, parts[i].s, parts[i].part_rating);
   }
+
+  // to compute the number we need to iterate through the parts
+  int total = 0;
+  for (int i = 0; i < partCount; i++) {
+    total += organise_part(&parts[i]);
+  }
 }
 
-void handle_part(part_t part) {}
+int organise_part(part_t *part) { return part->part_rating; }
 
 workflow_t *get_workflow(char *name) {
   for (int i = 0; i < workflowCount; i++) {
