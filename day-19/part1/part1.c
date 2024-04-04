@@ -24,6 +24,7 @@ typedef struct part {
 } part_t;
 
 int organise_part(part_t *part);
+workflow_t *get_workflow(char *name);
 
 workflow_t *workflows;
 int workflowCount = 0;
@@ -128,6 +129,7 @@ int main() {
   }
 
   // to compute the number we need to iterate through the parts
+  workflow_t *first_workflow = get_workflow("in");
   int total = 0;
   for (int i = 0; i < partCount; i++) {
     total += organise_part(&parts[i]);
@@ -135,6 +137,14 @@ int main() {
 }
 
 int organise_part(part_t *part) { return part->part_rating; }
+
+bool check_part_rule(int value, rule_t rule) {
+  if (rule.operator== '<') {
+    return value < rule.value;
+  } else {
+    return value > rule.value;
+  }
+}
 
 workflow_t *get_workflow(char *name) {
   for (int i = 0; i < workflowCount; i++) {
