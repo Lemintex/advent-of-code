@@ -25,6 +25,7 @@ typedef struct part {
 
 int organise_part(part_t *part);
 workflow_t *get_workflow(char *name);
+bool check_part_rule(int value, rule_t *rule);
 
 workflow_t *workflows;
 int workflowCount = 0;
@@ -131,18 +132,49 @@ int main() {
   // to compute the number we need to iterate through the parts
   workflow_t *first_workflow = get_workflow("in");
   int total = 0;
-  for (int i = 0; i < partCount; i++) {
-    total += organise_part(&parts[i]);
-  }
 }
 
-int organise_part(part_t *part) { return part->part_rating; }
+int organise_part(part_t *part) {
+  workflow_t *current_workflow = get_workflow("in");
+  int total = 0;
+  bool part_completed = false;
+  while (!part_completed) {
+    for (int i = 0; i < current_workflow->ruleCount; i++) {
+      rule_t rule = current_workflow->rules[i];
+      if (rule.type == 'x') {
+        if (check_part_rule(part->x, &rule)) {
+          current_workflow = get_workflow(rule.targetWorkflowName);
+          break;
+        }
+      } else if (rule.type == 'm') {
+        if (check_part_rule(part->m, &rule)) {
+          current_workflow = get_workflow(rule.targetWorkflowName);
+          break;
+        }
+      } else if (rule.type == 'a') {
+        if (check_part_rule(part->a, &rule)) {
+          current_workflow = get_workflow(rule.targetWorkflowName);
+          break;
+        }
+      } else if (rule.type == 's') {
+        if (check_part_rule(part->s, &rule)) {
+          current_workflow = get_workflow(rule.targetWorkflowName);
+          break;
+        }
+      }
+    }
+    if (current_workflow->is_accepted) {
+      total += part->part_rating;
+    }
+  }
+  return part->part_rating;
+}
 
-bool check_part_rule(int value, rule_t rule) {
-  if (rule.operator== '<') {
-    return value < rule.value;
+bool check_part_rule(int value, rule_t *rule) {
+  if (rule->operator== '<') {
+    return value < rule->value;
   } else {
-    return value > rule.value;
+    return value > rule->value;
   }
 }
 
