@@ -14,7 +14,7 @@ typedef struct workflow {
   // store up to 4 rules
   char *name;
   rule_t *rules;
-  int ruleCount;
+  int rule_count;
   char *final_rule;
   bool is_accepted;
 } workflow_t;
@@ -27,82 +27,94 @@ typedef struct part {
 int organise_part(part_t *part);
 workflow_t *get_workflow(char *name);
 bool check_part_rule(int value, rule_t *rule);
+void print_workflows();
 
 workflow_t *workflows;
-int workflowCount = 0;
+int workflow_count = 0;
 part_t *parts;
-int partCount = 0;
+int part_count = 0;
 
 int main() {
   FILE *input = fopen("../input.txt", "r");
 
   // big char array to hold the line
   char line[256];
-  bool readingInstructions = true;
+  bool is_reading_instructions = true;
 
   while (fgets(line, sizeof(line), input)) {
-    if (readingInstructions) {
+    if (is_reading_instructions) {
       if (line[0] == '\n') {
-        readingInstructions = false;
+        is_reading_instructions = false;
         continue;
       }
-      workflowCount++;
+      workflow_count++;
     } else {
-      partCount++;
+      part_count++;
     }
   }
   rewind(input);
 
-  workflows = (workflow_t *)malloc(workflowCount * sizeof(workflow_t));
-  parts = (part_t *)malloc(partCount * sizeof(part_t));
+  workflows = (workflow_t *)malloc(workflow_count * sizeof(workflow_t));
+  parts = (part_t *)malloc(part_count * sizeof(part_t));
 
-  readingInstructions = true;
+  is_reading_instructions = true;
   int instruction_index = 0;
   int part_index = 0;
   while (fgets(line, sizeof(line), input)) {
-    if (readingInstructions) {
+    if (is_reading_instructions) {
       if (line[0] == '\n') {
-        readingInstructions = false;
+        is_reading_instructions = false;
         continue;
       }
       // this is an instruction
       char *lineCopy = strdup(line);
 
-      char *name = strtok(line, "{");
+      char *workflow_name = strtok(lineCopy, "{");
+      printf("Workflow name: %s\n", workflow_name);
 
       // get the rules
-      int ruleCount = 1;
-      for (int i = 0; i < strlen(lineCopy); i++) {
-        if (lineCopy[i] == ',') {
-          ruleCount++;
+      int rule_count = 0;
+      for (int i = 0; i < strlen(line); i++) {
+        if (line[i] == ',') {
+          rule_count++;
         }
       }
+      printf("Rule count: %d\n", rule_count);
+      printf("Name: %s\n", workflow_name);
 
+      // this works up to here
       // get each rule
-      rule_t rules[ruleCount];
-      for (int i = 0; i < ruleCount - 1; i++) {
-        char *rule = strtok(NULL, ",");
-        printf("Rule: %s\n", rule);
-        char instructionType = rule[0];
-        printf("Instruction type: %c\n", instructionType);
-        char operator= rule[1];
-        printf("Operator: %c\n", operator);
-        int value = atoi(&rule[2]);
-        printf("Value: %d\n", value);
-      }
       workflow_t workflow;
-      printf("Rule count: %d\n", ruleCount);
-      workflow.ruleCount = ruleCount;
+      workflow.name = (char *)malloc(strlen(workflow_name) * sizeof(char));
+      workflow.rules = (rule_t *)malloc(rule_count * sizeof(rule_t));
+      rule_t rules[rule_count];
+      for (int i = 0; i < rule_count; i++) {
+        char *rule = strtok(NULL, ":");
+        printf("Rule: %s\n", rule);
+        workflow.rules[i].type = rule[0];
+        printf("Instruction type: %c\n", workflow.rules[i].type);
+        workflow.rules[i].operator= rule[1];
+        printf("Operator: %c\n", workflow.rules[i].operator);
+        workflow.rules[i].value = atoi(&rule[2]);
+        printf("Value: %d\n", workflow.rules[i].value);
+        printf("Rule: %c %c %d\n", workflow.rules[i].type,
+               workflow.rules[i].operator, workflow.rules[i].value);
+
+        // get the target workflow
+        char *str = strtok(NULL, ",");
+        printf("Str: %s\n", str);
+        workflow.rules[i].targetWorkflowName = strdup(str);
+      }
+      printf("Rule count: %d\n", rule_count);
+      workflow.rule_count = rule_count;
       workflow.final_rule = strdup(strtok(NULL, "}"));
       printf("Final rule: %s\n", workflow.final_rule);
-      printf("%s\n", name);
-      workflow.name = (char *)malloc(strlen(name) * sizeof(char));
-      workflow.rules = (rule_t *)malloc(ruleCount * sizeof(rule_t));
-      workflows[instruction_index++] = workflow;
-      strcpy(workflow.name, name);
-      workflow.ruleCount = 0;
+      printf("%s\n", workflow_name);
+      strcpy(workflow.name, workflow_name);
+      // workflow.rule_count = 0;
       printf("Instruction count: %d\n", instruction_index);
-      printf("Instruction name: %s\n", workflows[instruction_index - 1].name);
+      printf("Instruction name: %s\n", workflows[instruction_index].name);
+      workflows[instruction_index++] = workflow;
     } else {
       char *name = strtok(line, "{");
       printf("Name: %s\n", name);
@@ -122,12 +134,13 @@ int main() {
              part_rating);
     }
   }
-  printf("Instruction count: %d\n", workflowCount);
+  print_workflows();
+  printf("Instruction count: %d\n", workflow_count);
   for (int i = 0; i < instruction_index; i++) {
     printf("Instruction %d: %s\n", i, workflows[i].name);
   }
   printf("Part count: %d\n", part_index);
-  for (int i = 0; i < partCount; i++) {
+  for (int i = 0; i < part_count; i++) {
     printf("Part %d: X: %d, M: %d, A: %d, S: %d, total: %d\n", i, parts[i].x,
            parts[i].m, parts[i].a, parts[i].s, parts[i].part_rating);
   }
@@ -135,10 +148,12 @@ int main() {
   // to compute the number we need to iterate through the parts
   workflow_t *first_workflow = get_workflow("in");
   int total = 0;
-  for (int i = 0; i < partCount; i++) {
+  for (int i = 0; i < part_count; i++) {
+    printf("Part %d\n===============\n", i);
     total += organise_part(&parts[i]);
     printf("Total: %d\n", total);
   }
+  printf("FINAL total: %d\n", total);
 }
 
 int organise_part(part_t *part) {
@@ -146,39 +161,60 @@ int organise_part(part_t *part) {
   int total = 0;
   bool part_completed = false;
   while (!part_completed) {
-    printf("Rule count: %d\n", current_workflow->ruleCount);
+    printf("Rule count: %d\n", current_workflow->rule_count);
     // printf("Current workflow: %s\n", current_workflow->name);
-    for (int i = 0; i < current_workflow->ruleCount; i++) {
+    for (int i = 0; i < current_workflow->rule_count; i++) {
+      printf("Workflow: %s\nRule: %d\n", current_workflow->name, i);
+      if (strcmp(current_workflow->name, "qs") == 0) {
+        printf("QS\n");
+      }
+      bool rule_met = false;
       rule_t rule = current_workflow->rules[i];
+      printf("rule -> %c %c %d\n", rule.type, rule.operator, rule.value);
       if (rule.type == 'x') {
         if (check_part_rule(part->x, &rule)) {
           printf("X\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
-          current_workflow = get_workflow(rule.targetWorkflowName);
+          rule_met = true;
           break;
         }
       } else if (rule.type == 'm') {
         if (check_part_rule(part->m, &rule)) {
           printf("M\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
-          current_workflow = get_workflow(rule.targetWorkflowName);
+          rule_met = true;
           break;
         }
       } else if (rule.type == 'a') {
         if (check_part_rule(part->a, &rule)) {
           printf("A\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
-          current_workflow = get_workflow(rule.targetWorkflowName);
+          rule_met = true;
           break;
         }
       } else if (rule.type == 's') {
         if (check_part_rule(part->s, &rule)) {
           printf("S\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
-          current_workflow = get_workflow(rule.targetWorkflowName);
+          rule_met = true;
           break;
         }
       }
+      printf("Rule type: %c\n", rule.type);
+      if (rule_met) {
+        rule_met = false;
+        if (strcmp(rule.targetWorkflowName, "A") == 0) {
+          printf("Returning part rating: %d\n", part->part_rating);
+          return part->part_rating;
+        } else if (strcmp(rule.targetWorkflowName, "R") == 0) {
+          return 0;
+        } else {
+          current_workflow = get_workflow(rule.targetWorkflowName);
+          break;
+        }
+        break;
+      }
+      // if we reach the end of the loop, we have to check the final rule
     }
     if (strcmp(current_workflow->final_rule, "A") == 0) {
       return part->part_rating;
@@ -202,10 +238,23 @@ bool check_part_rule(int value, rule_t *rule) {
 }
 
 workflow_t *get_workflow(char *name) {
-  for (int i = 0; i < workflowCount; i++) {
+  for (int i = 0; i < workflow_count; i++) {
     if (strcmp(workflows[i].name, name) == 0) {
       return &workflows[i];
     }
   }
   return NULL;
+}
+
+void print_workflows() {
+  printf("PRINTING\n-----------------\n");
+  printf("Workflow count: %d\n", workflow_count);
+  for (int i = 0; i < workflow_count; i++) {
+    for (int j = 0; j < workflows[i].rule_count; j++) {
+      printf("Rule %d: %c %c %d\n", j, workflows[i].rules[j].type,
+             workflows[i].rules[j].operator, workflows[i].rules[j].value);
+      printf("Target workflow: %s\n", workflows[i].rules[j].targetWorkflowName);
+    }
+    printf("Final rule: %s\n", workflows[i].final_rule);
+  }
 }
