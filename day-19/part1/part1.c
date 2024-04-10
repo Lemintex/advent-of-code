@@ -149,7 +149,9 @@ int main() {
   workflow_t *first_workflow = get_workflow("in");
   int total = 0;
   for (int i = 0; i < part_count; i++) {
-    printf("Part %d\n===============\n", i);
+    printf("Part %d\n===============\n", i + 1);
+    printf("X: %d, M: %d, A: %d, S: %d\n", parts[i].x, parts[i].m, parts[i].a,
+           parts[i].s);
     total += organise_part(&parts[i]);
     printf("Total: %d\n", total);
   }
@@ -157,18 +159,28 @@ int main() {
 }
 
 int organise_part(part_t *part) {
+  // get the first workflow
   workflow_t *current_workflow = get_workflow("in");
+
   int total = 0;
   bool part_completed = false;
   while (!part_completed) {
+    bool rule_met = false;
     printf("Rule count: %d\n", current_workflow->rule_count);
     // printf("Current workflow: %s\n", current_workflow->name);
     for (int i = 0; i < current_workflow->rule_count; i++) {
-      printf("Workflow: %s\nRule: %d\n", current_workflow->name, i);
-      if (strcmp(current_workflow->name, "qs") == 0) {
-        printf("QS\n");
+      if (rule_met) {
+        i = 0;
+        rule_met = false;
       }
-      bool rule_met = false;
+      printf("Workflow: %s\nRule: %d\n", current_workflow->name, i);
+      if (strcmp(current_workflow->name, "qqz") == 0) {
+        for (int j = 0; j < current_workflow->rule_count; j++) {
+          printf("Rule %d: %c %c %d\n", j, current_workflow->rules[j].type,
+                 current_workflow->rules[j].operator,
+                 current_workflow->rules[j].value);
+        }
+      }
       rule_t rule = current_workflow->rules[i];
       printf("rule -> %c %c %d\n", rule.type, rule.operator, rule.value);
       if (rule.type == 'x') {
@@ -176,52 +188,47 @@ int organise_part(part_t *part) {
           printf("X\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
           rule_met = true;
-          break;
         }
       } else if (rule.type == 'm') {
         if (check_part_rule(part->m, &rule)) {
           printf("M\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
           rule_met = true;
-          break;
         }
       } else if (rule.type == 'a') {
         if (check_part_rule(part->a, &rule)) {
           printf("A\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
           rule_met = true;
-          break;
         }
       } else if (rule.type == 's') {
         if (check_part_rule(part->s, &rule)) {
           printf("S\n");
           printf("Target workflow: %s\n", rule.targetWorkflowName);
           rule_met = true;
-          break;
         }
       }
       printf("Rule type: %c\n", rule.type);
       if (rule_met) {
-        rule_met = false;
         if (strcmp(rule.targetWorkflowName, "A") == 0) {
           printf("Returning part rating: %d\n", part->part_rating);
           return part->part_rating;
         } else if (strcmp(rule.targetWorkflowName, "R") == 0) {
+          printf("Workflow %s rejected\n", current_workflow->name);
           return 0;
         } else {
           current_workflow = get_workflow(rule.targetWorkflowName);
-          break;
         }
-        break;
       }
       // if we reach the end of the loop, we have to check the final rule
-    }
-    if (strcmp(current_workflow->final_rule, "A") == 0) {
-      return part->part_rating;
-    } else if (strcmp(current_workflow->final_rule, "R") == 0) {
-      return 0;
-    } else {
-      current_workflow = get_workflow(current_workflow->final_rule);
+      if (strcmp(current_workflow->final_rule, "A") == 0) {
+        return part->part_rating;
+      } else if (strcmp(current_workflow->final_rule, "R") == 0) {
+        printf("Workflow %s rejected\n", current_workflow->name);
+        return 0;
+      } else {
+        current_workflow = get_workflow(current_workflow->final_rule);
+      }
     }
   }
   return 0;
