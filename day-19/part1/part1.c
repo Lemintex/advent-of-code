@@ -143,10 +143,6 @@ int organise_part(part_t *part) {
     printf("Rule count: %d\n", current_workflow->rule_count);
     // printf("Current workflow: %s\n", current_workflow->name);
     for (int i = 0; i < current_workflow->rule_count; i++) {
-      if (rule_met) {
-        i = 0;
-        rule_met = false;
-      }
       rule_t rule = current_workflow->rules[i];
       if (rule.type == 'x') {
         if (check_part_rule(part->x, &rule)) {
@@ -166,6 +162,7 @@ int organise_part(part_t *part) {
         }
       }
       if (rule_met) {
+        rule_met = false;
         if (strcmp(rule.targetWorkflowName, "A") == 0) {
           printf("A\n");
           return part->part_rating;
@@ -257,3 +254,42 @@ void print_workflows() {
     printf("Final rule: %s\n", workflows[i].final_rule);
   }
 }
+
+//{
+//    for (int i = 0; i < current_workflow->rule_count; i++) {
+//      rule_t rule = current_workflow->rules[i];
+//      int value = 0;
+//      if (rule.type == 'x') {
+//        value = part->x;
+//      } else if (rule.type == 'm') {
+//        value = part->m;
+//      } else if (rule.type == 'a') {
+//        value = part->a;
+//      } else if (rule.type == 's') {
+//        value = part->s;
+//      }
+//      // check if the rule is A or R
+//      if (rule.operator== 'A') {
+//        printf("Accepting part\n");
+//        return part->part_rating;
+//      } else if (rule.operator== 'R') {
+//        printf("Rejecting part\n");
+//        return 0;
+//      }
+//      if (check_part_rule(value, &rule)) {
+//        current_workflow = get_workflow(rule.targetWorkflowName);
+//        break;
+//      }
+//    }
+//    // if we get here, we have not accepted or rejected the part
+//    // check the final rule
+//    if (strcmp(current_workflow->final_rule, "A") == 0) {
+//      printf("Accepting part\n");
+//      return part->part_rating;
+//    } else if (strcmp(current_workflow->final_rule, "R") == 0) {
+//      printf("Rejecting part\n");
+//      return 0;
+//    } else {
+//      current_workflow = get_workflow(current_workflow->final_rule);
+//    }
+//  }
