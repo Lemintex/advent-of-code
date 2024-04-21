@@ -171,6 +171,7 @@ int organise_part(part_t *part) {
           return 0;
         } else {
           current_workflow = get_workflow(rule.targetWorkflowName);
+          i = -1;
         }
       }
     }
