@@ -32,7 +32,8 @@ typedef struct part_group {
 
 int organise_part_range(part_range_t *part_range);
 workflow_t *get_workflow(char *name);
-bool check_part_rule(int value, rule_t *rule);
+void split_part_range(part_range_t *part_range, char ch, int split_val);
+void copy_part_range();
 
 workflow_t *workflows;
 int workflow_count = 0;
@@ -112,70 +113,28 @@ int main() {
     }
   }
 
-  for (int i = 0; i < workflow_count; i++) {
-    printf("Workflow: %s\n", workflows[i].name);
-    for (int j = 0; j < workflows[i].rule_count; j++) {
-      printf("Rule: %c %c %d %s\n", workflows[i].rules[j].type,
-             workflows[i].rules[j].comparator, workflows[i].rules[j].value,
-             workflows[i].rules[j].targetWorkflowName);
-    }
-    printf("Final rule: %s\n", workflows[i].final_rule);
-  }
-  // to compute the number we need to iterate through the parts and total the
-  // ratings of the accepted ones
-  int total = 0;
-  for (int i = 0; i < part_range_count; i++) {
-    total += organise_part_range(&part_ranges[i]);
-  }
-  printf("FINAL total: %d\n", total);
+  // part 2
+  part_range_count = 1;
+  part_ranges = (part_range_t *)malloc(part_range_count * sizeof(part_range_t));
 }
 
-int organise_part_range(part_range_t *part_range) {
-  // always start at the "in" workflow
-  workflow_t *current_workflow = get_workflow("in");
-  //
-  //  while (true) {
-  //    bool rule_met = false;
-  //    for (int i = 0; i < current_workflow->rule_count; i++) {
-  //      rule_t rule = current_workflow->rules[i];
-  //      if ((rule.type == 'x' && check_part_rule(part->x, &rule)) ||
-  //          (rule.type == 'm' && check_part_rule(part->m, &rule)) ||
-  //          (rule.type == 'a' && check_part_rule(part->a, &rule)) ||
-  //          (rule.type == 's' && check_part_rule(part->s, &rule))) {
-  //        rule_met = true;
-  //      }
-  //      if (rule_met) {
-  //        rule_met = false;
-  //        if (strcmp(rule.targetWorkflowName, "A") == 0) {
-  //          return part->part_rating;
-  //        } else if (strcmp(rule.targetWorkflowName, "R") == 0) {
-  //          return 0;
-  //        } else {
-  //          current_workflow = get_workflow(rule.targetWorkflowName);
-  //
-  //          // reset the loop index
-  //          i = -1;
-  //        }
-  //      }
-  //    }
-  //    // if we reach the end of the loop, we have to check the final rule
-  //    if (strcmp(current_workflow->final_rule, "A") == 0) {
-  //      return part->part_rating;
-  //    } else if (strcmp(current_workflow->final_rule, "R") == 0) {
-  //      return 0;
-  //    } else {
-  //      current_workflow = get_workflow(current_workflow->final_rule);
-  //    }
-  //  }
-  return 0;
-}
-
-bool check_part_rule(int value, rule_t *rule) {
-  if (rule->comparator == '<') {
-    return value < rule->value;
+void split_part_range(part_range_t *part_range, char ch, int split_val) {
+  copy_part_range();
+  if (ch == '<') {
+    part_ranges[part_range_count - 1].max = split_val - 1;
+    part_ranges[part_range_count].min = split_val;
   } else {
-    return value > rule->value;
+    part_ranges[part_range_count - 1].max = split_val;
+    part_ranges[part_range_count].min = split_val + 1;
   }
+}
+
+void copy_part_range() {
+  part_ranges = (part_range_t *)realloc(
+      part_ranges, part_range_count * sizeof(part_range_t) + 1);
+  part_ranges[part_range_count].min = part_ranges[part_range_count - 1].min;
+  part_ranges[part_range_count].max = part_ranges[part_range_count - 1].max;
+  part_range_count++;
 }
 
 workflow_t *get_workflow(char *name) {
