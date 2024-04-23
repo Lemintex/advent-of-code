@@ -23,12 +23,11 @@ typedef struct part_range {
 } part_range_t;
 
 typedef struct part_group {
-  part_range_t x;  // the range of the x part
-  part_range_t m;  // the range of the m part
-  part_range_t a;  // the range of the a part
-  part_range_t s;  // the range of the s part
-  int part_rating; // the total rating of the part
-} part_t;
+  part_range_t x; // the range of the x part
+  part_range_t m; // the range of the m part
+  part_range_t a; // the range of the a part
+  part_range_t s; // the range of the s part
+} part_group_t;
 
 int organise_part_range(part_range_t *part_range);
 workflow_t *get_workflow(char *name);
@@ -37,8 +36,8 @@ void copy_part_range();
 
 workflow_t *workflows;
 int workflow_count = 0;
-part_range_t *part_ranges;
-int part_range_count = 0;
+part_group_t *part_groups;
+int part_group_count = 0;
 
 int main() {
   FILE *input = fopen("../input.txt", "r");
@@ -114,27 +113,20 @@ int main() {
   }
 
   // part 2
-  part_range_count = 1;
-  part_ranges = (part_range_t *)malloc(part_range_count * sizeof(part_range_t));
+  part_group_count = 1;
+  part_groups = (part_group_t *)malloc(part_group_count * sizeof(part_group_t));
 }
 
-void split_part_range(part_range_t *part_range, char ch, int split_val) {
+void split_part_range(part_group_t *part_range, char ch, int split_val) {
   copy_part_range();
-  if (ch == '<') {
-    part_ranges[part_range_count - 1].max = split_val - 1;
-    part_ranges[part_range_count].min = split_val;
-  } else {
-    part_ranges[part_range_count - 1].max = split_val;
-    part_ranges[part_range_count].min = split_val + 1;
-  }
 }
 
 void copy_part_range() {
-  part_ranges = (part_range_t *)realloc(
-      part_ranges, part_range_count * sizeof(part_range_t) + 1);
-  part_ranges[part_range_count].min = part_ranges[part_range_count - 1].min;
-  part_ranges[part_range_count].max = part_ranges[part_range_count - 1].max;
-  part_range_count++;
+  part_groups = (part_group_t *)realloc(
+      part_groups, part_group_count * sizeof(part_group_t) + 1);
+  //  part_groups[part_group_count].min = part_groups[part_group_count - 1];
+  //  part_groups[part_group_count].max = part_groups[part_group_count - 1];
+  part_group_count++;
 }
 
 workflow_t *get_workflow(char *name) {
