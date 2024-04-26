@@ -116,16 +116,24 @@ int main() {
   // part 2
   part_group_count = 1;
   part_groups = (part_group_t *)malloc(part_group_count * sizeof(part_group_t));
+  part_groups[0].x.min = 1;
+  part_groups[0].x.max = 4000;
+  part_groups[0].m.min = 1;
+  part_groups[0].m.max = 4000;
+  part_groups[0].a.min = 1;
+  part_groups[0].a.max = 4000;
+  part_groups[0].s.min = 1;
+  part_groups[0].s.max = 4000;
 
-  count_accepted_parts("in");
+  printf("Total: %ld\n", count_accepted_parts(part_groups[0], "in"));
 }
 
 long int count_accepted_parts(part_group_t group, char *workflow__name) {
+  long int count = 0;
   if (strcmp(workflow__name, "R") == 0) {
     return 0;
   }
   if (strcmp(workflow__name, "A") == 0) {
-    long int count = 0;
     count += group.x.max - group.x.min + 1;
     count *= group.m.max - group.m.min + 1;
     count *= group.a.max - group.a.min + 1;
@@ -133,6 +141,123 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
     return count;
   }
   // recursive call
+  workflow_t *workflow = get_workflow(workflow__name);
+
+  // loop through the rules
+  for (int i = 0; i < workflow->rule_count; i++) {
+    rule_t rule = workflow->rules[i];
+    int low = 0;
+    int high = 0;
+    if (rule.type == 'x') {
+      low = group.x.min;
+      high = group.x.max;
+    } else if (rule.type == 'm') {
+      low = group.m.min;
+      high = group.m.max;
+    } else if (rule.type == 'a') {
+      low = group.a.min;
+      high = group.a.max;
+    } else if (rule.type == 's') {
+      low = group.s.min;
+      high = group.s.max;
+    }
+
+    part_group_t T = group;
+    part_group_t F = group;
+
+    if (rule.comparator == '<') {
+      switch (rule.type) {
+      case 'x':
+        T.x.min = group.x.min;
+        T.x.max = rule.value - 1;
+        F.x.min = rule.value;
+        F.x.max = group.x.max;
+        break;
+      case 'm':
+        T.m.min = group.m.min;
+        T.m.max = rule.value - 1;
+        F.m.min = rule.value;
+        F.m.max = group.m.max;
+        break;
+      case 'a':
+        T.a.min = group.a.min;
+        T.a.max = rule.value - 1;
+        F.a.min = rule.value;
+        F.a.max = group.a.max;
+        break;
+      case 's':
+        T.s.min = group.s.min;
+        T.s.max = rule.value - 1;
+        F.s.min = rule.value;
+        F.s.max = group.s.max;
+        break;
+      }
+    } else if (rule.comparator == '>') {
+      switch (rule.type) {
+      case 'x':
+        T.x.min = rule.value;
+        T.x.max = group.x.max;
+        F.x.min = group.x.min;
+        F.x.max = rule.value - 1;
+        break;
+      case 'm':
+        T.m.min = rule.value;
+        T.m.max = group.m.max;
+        F.m.min = group.m.min;
+        F.m.max = rule.value - 1;
+        break;
+      case 'a':
+        T.a.min = rule.value;
+        T.a.max = group.a.max;
+        F.a.min = group.a.min;
+        F.a.max = rule.value - 1;
+        break;
+      case 's':
+        T.s.min = rule.value;
+        T.s.max = group.s.max;
+        F.s.min = group.s.min;
+        F.s.max = rule.value - 1;
+        break;
+      }
+    }
+
+    switch (rule.type) {
+    case 'x':
+      if (T.x.min <= T.x.max) {
+        count += count_accepted_parts(T, rule.targetWorkflowName);
+      }
+      if (F.x.min <= F.x.max) {
+        count += count_accepted_parts(F, rule.targetWorkflowName);
+      }
+      break;
+    case 'm':
+      if (T.m.min <= T.m.max) {
+        count += count_accepted_parts(T, rule.targetWorkflowName);
+      }
+      if (F.m.min <= F.m.max) {
+        count += count_accepted_parts(F, rule.targetWorkflowName);
+      }
+      break;
+    case 'a':
+      if (T.a.min <= T.a.max) {
+        count += count_accepted_parts(T, rule.targetWorkflowName);
+      }
+      if (F.a.min <= F.a.max) {
+        count += count_accepted_parts(F, rule.targetWorkflowName);
+      }
+      break;
+    case 's':
+      if (T.s.min <= T.s.max) {
+        count += count_accepted_parts(T, rule.targetWorkflowName);
+      }
+      if (F.s.min <= F.s.max) {
+        count += count_accepted_parts(F, rule.targetWorkflowName);
+      }
+      break;
+    }
+  }
+  count += count_accepted_parts(group, workflow->final_rule);
+  return count;
 }
 
 void split_part_group(part_group_t *part_range, char ch, int split_val) {
