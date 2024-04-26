@@ -33,6 +33,7 @@ int organise_part_range(part_range_t *part_range);
 workflow_t *get_workflow(char *name);
 void split_part_range(part_range_t *part_range, char ch, int split_val);
 void copy_part_range();
+long int count_accepted_parts(part_group_t group, char *workflow__name);
 
 workflow_t *workflows;
 int workflow_count = 0;
@@ -46,7 +47,7 @@ int main() {
   char line[256];
   bool is_reading_instructions = true;
 
-  // get the number of workflows and parts
+  // get the number of workflows
   while (fgets(line, sizeof(line), input)) {
     if (line[0] == '\n') {
       break;
@@ -55,7 +56,7 @@ int main() {
   }
   rewind(input);
 
-  // allocate memory for the workflows and parts
+  // allocate memory for the workflows
   workflows = (workflow_t *)malloc(workflow_count * sizeof(workflow_t));
 
   is_reading_instructions = true;
@@ -115,17 +116,33 @@ int main() {
   // part 2
   part_group_count = 1;
   part_groups = (part_group_t *)malloc(part_group_count * sizeof(part_group_t));
+
+  count_accepted_parts("in");
 }
 
-void split_part_range(part_group_t *part_range, char ch, int split_val) {
+long int count_accepted_parts(part_group_t group, char *workflow__name) {
+  if (strcmp(workflow__name, "R") == 0) {
+    return 0;
+  }
+  if (strcmp(workflow__name, "A") == 0) {
+    long int count = 0;
+    count += group.x.max - group.x.min + 1;
+    count *= group.m.max - group.m.min + 1;
+    count *= group.a.max - group.a.min + 1;
+    count *= group.s.max - group.s.min + 1;
+    return count;
+  }
+  // recursive call
+}
+
+void split_part_group(part_group_t *part_range, char ch, int split_val) {
   copy_part_range();
 }
 
 void copy_part_range() {
   part_groups = (part_group_t *)realloc(
       part_groups, part_group_count * sizeof(part_group_t) + 1);
-  //  part_groups[part_group_count].min = part_groups[part_group_count - 1];
-  //  part_groups[part_group_count].max = part_groups[part_group_count - 1];
+  part_groups[part_group_count] = part_groups[part_group_count - 1];
   part_group_count++;
 }
 
