@@ -128,39 +128,26 @@ int main() {
   printf("Total: %ld\n", count_accepted_parts(part_groups[0], "in"));
 }
 
+// recursive function to count the number of accepted parts
 long int count_accepted_parts(part_group_t group, char *workflow__name) {
-  long int count = 0;
+  long int count = 1;
   if (strcmp(workflow__name, "R") == 0) {
     return 0;
   }
   if (strcmp(workflow__name, "A") == 0) {
-    count += group.x.max - group.x.min + 1;
+    count *= group.x.max - group.x.min + 1;
     count *= group.m.max - group.m.min + 1;
     count *= group.a.max - group.a.min + 1;
     count *= group.s.max - group.s.min + 1;
     return count;
   }
-  // recursive call
+
+  // we need to get the workflow
   workflow_t *workflow = get_workflow(workflow__name);
 
   // loop through the rules
   for (int i = 0; i < workflow->rule_count; i++) {
     rule_t rule = workflow->rules[i];
-    int low = 0;
-    int high = 0;
-    if (rule.type == 'x') {
-      low = group.x.min;
-      high = group.x.max;
-    } else if (rule.type == 'm') {
-      low = group.m.min;
-      high = group.m.max;
-    } else if (rule.type == 'a') {
-      low = group.a.min;
-      high = group.a.max;
-    } else if (rule.type == 's') {
-      low = group.s.min;
-      high = group.s.max;
-    }
 
     part_group_t T = group;
     part_group_t F = group;
@@ -195,65 +182,70 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
     } else if (rule.comparator == '>') {
       switch (rule.type) {
       case 'x':
-        T.x.min = rule.value;
+        T.x.min = rule.value + 1;
         T.x.max = group.x.max;
         F.x.min = group.x.min;
-        F.x.max = rule.value - 1;
+        F.x.max = rule.value;
         break;
       case 'm':
-        T.m.min = rule.value;
+        T.m.min = rule.value + 1;
         T.m.max = group.m.max;
         F.m.min = group.m.min;
-        F.m.max = rule.value - 1;
+        F.m.max = rule.value;
         break;
       case 'a':
-        T.a.min = rule.value;
+        T.a.min = rule.value + 1;
         T.a.max = group.a.max;
         F.a.min = group.a.min;
-        F.a.max = rule.value - 1;
+        F.a.max = rule.value;
         break;
       case 's':
-        T.s.min = rule.value;
+        T.s.min = rule.value + 1;
         T.s.max = group.s.max;
         F.s.min = group.s.min;
-        F.s.max = rule.value - 1;
+        F.s.max = rule.value;
         break;
       }
     }
 
-    switch (rule.type) {
-    case 'x':
+    char *next_workflow;
+    bool failed_all = false;
+    if (rule.type == 'x') {
       if (T.x.min <= T.x.max) {
         count += count_accepted_parts(T, rule.targetWorkflowName);
       }
-      if (F.x.min <= F.x.max) {
-        count += count_accepted_parts(F, rule.targetWorkflowName);
+      if (F.x.min <= F.x.max && !failed_all) {
+        group = F;
+      } else {
+        break;
       }
-      break;
-    case 'm':
+    } else if (rule.type == 'm') {
       if (T.m.min <= T.m.max) {
         count += count_accepted_parts(T, rule.targetWorkflowName);
       }
-      if (F.m.min <= F.m.max) {
-        count += count_accepted_parts(F, rule.targetWorkflowName);
+      if (F.m.min <= F.m.max && !failed_all) {
+        group = F;
+      } else {
+        break;
       }
-      break;
-    case 'a':
+    } else if (rule.type == 'a') {
       if (T.a.min <= T.a.max) {
         count += count_accepted_parts(T, rule.targetWorkflowName);
       }
-      if (F.a.min <= F.a.max) {
-        count += count_accepted_parts(F, rule.targetWorkflowName);
+      if (F.a.min <= F.a.max && !failed_all) {
+        group = F;
+      } else {
+        break;
       }
-      break;
-    case 's':
+    } else if (rule.type == 's') {
       if (T.s.min <= T.s.max) {
         count += count_accepted_parts(T, rule.targetWorkflowName);
       }
-      if (F.s.min <= F.s.max) {
-        count += count_accepted_parts(F, rule.targetWorkflowName);
+      if (F.s.min <= F.s.max && !failed_all) {
+        group = F;
+      } else {
+        break;
       }
-      break;
     }
   }
   count += count_accepted_parts(group, workflow->final_rule);
