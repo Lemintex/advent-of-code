@@ -40,6 +40,7 @@ int workflow_count = 0;
 part_group_t *part_groups;
 int part_group_count = 0;
 
+// TODO - refactor this to be less ugly
 int main() {
   FILE *input = fopen("../input.txt", "r");
 
@@ -130,11 +131,12 @@ int main() {
 
 // recursive function to count the number of accepted parts
 long int count_accepted_parts(part_group_t group, char *workflow__name) {
-  long int count = 1;
+  long int count = 0;
   if (strcmp(workflow__name, "R") == 0) {
     return 0;
   }
   if (strcmp(workflow__name, "A") == 0) {
+    count = 1;
     count *= group.x.max - group.x.min + 1;
     count *= group.m.max - group.m.min + 1;
     count *= group.a.max - group.a.min + 1;
