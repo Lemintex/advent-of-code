@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/queue.h>
-
 int pulses[2] = {0, 0};
 
 typedef enum module_type { BUTTON, RELAY, FLIPFLOP, CONJUNCTION } module_type_e;
@@ -28,7 +26,40 @@ int module_total = 0;
 int broadcaster_index = 0;
 
 // QUEUE STUFF
-SLIST_HEAD(slisthead, entry) head = SLIST_HEAD_INITIALIZER(head);
+typedef struct node {
+  module_t *module;
+  struct node *next;
+} node_t;
+
+typedef struct queue {
+  node_t *head;
+  node_t *tail;
+} queue_t;
+
+void enqueue(queue_t *queue, module_t *module) {
+  node_t *new_node = malloc(sizeof(node_t));
+  new_node->module = module;
+  new_node->next = NULL;
+  if (queue->head == NULL) {
+    queue->head = new_node;
+    queue->tail = new_node;
+  } else {
+    queue->tail->next = new_node;
+    queue->tail = new_node;
+  }
+}
+
+module_t *dequeue(queue_t *queue) {
+  if (queue->head == NULL) {
+    return NULL;
+  }
+  node_t *node = queue->head;
+  module_t *module = node->module;
+  queue->head = node->next;
+  free(node);
+  return module;
+}
+
 int main() {
   FILE *input = fopen("../input.txt", "r");
 
