@@ -19,7 +19,7 @@ typedef struct module {
 void press_button_full(int times);
 void press_button_once();
 void handle_signal_for_module(module_t *module, pulse_e pulse);
-module_t *get_module_by_name(char *name);
+int get_module_index_by_name(char *name);
 module_t *modules;
 int module_total = 0;
 
@@ -60,6 +60,14 @@ module_t *dequeue(queue_t *queue) {
   return module;
 }
 
+queue_t create_queue() {
+  queue_t queue;
+  queue.head = NULL;
+  queue.tail = NULL;
+  return queue;
+}
+
+queue_t queue;
 int main() {
   FILE *input = fopen("../input.txt", "r");
 
@@ -70,9 +78,15 @@ int main() {
   while (fgets(line, sizeof(line), input)) {
     lines++;
   }
+  module_total = lines;
   modules = malloc(sizeof(module_t) * lines);
   rewind(input);
   for (int i = 0; fgets(line, sizeof(line), input); i++) {
+    if (line[0] == '%' || line[0] == '&') {
+      for (int j = 0; j < strlen(line) - 1; j++) {
+        line[j] = line[j + 1];
+      }
+    }
     char *module_name = strtok(line, " ");
     if (strcmp(module_name, "broadcaster") == 0) {
       broadcaster_index = i;
@@ -104,25 +118,29 @@ int main() {
       modules[i].type = RELAY;
     }
   }
-  press_button_full(1000);
+  press_button_full(1);
   printf("Pulses: %d %d\n", pulses[LOW], pulses[HIGH]);
   printf("Total pulses: %d\n", pulses[LOW] + pulses[HIGH]);
 }
 
 void press_button_full(int times) {
+  queue = create_queue();
   for (int i = 0; i < times; i++) {
+    enqueue(&queue, &modules[broadcaster_index]);
     press_button_once();
   }
 }
 
 void press_button_once() {
-  handle_signal_for_module(&modules[broadcaster_index], LOW);
+  while (queue.head != NULL) {
+    module_t *module = dequeue(&queue);
+    handle_signal_for_module(module, module->pulse);
+  }
+  printf("Pulses: %d %d\n", pulses[LOW], pulses[HIGH]);
 }
 
 void handle_signal_for_module(module_t *module, pulse_e pulse) {
   static int num = 1;
-  printf("Num: %d\n", num++);
-  printf("Module: %s\n", module->name);
   if (module->type == FLIPFLOP) {
     if (pulse == LOW) {
       if (module->pulse == LOW) {
@@ -132,8 +150,9 @@ void handle_signal_for_module(module_t *module, pulse_e pulse) {
       }
       for (int i = 0; i < module->module_count; i++) {
         pulses[module->pulse]++;
-        module_t *m = get_module_by_name(module->modules[i]);
-        handle_signal_for_module(m, module->pulse);
+        int index = get_module_index_by_name(module->modules[i]);
+        module_t *m = &modules[index];
+        enqueue(&queue, m);
       }
     }
   } else if (module->type == CONJUNCTION) {
@@ -147,24 +166,32 @@ void handle_signal_for_module(module_t *module, pulse_e pulse) {
     }
     for (int i = 0; i < module->module_count; i++) {
       pulses[pulse]++;
-      module_t *m = get_module_by_name(module->modules[i]);
-      handle_signal_for_module(m, pulse);
+      int index = get_module_index_by_name(module->modules[i]);
+      module_t *m = &modules[index];
+      enqueue(&queue, m);
     }
   } else if (module->type == BUTTON) {
-    printf("Button %s\n", module->name);
     for (int i = 0; i < module->module_count; i++) {
       pulses[pulse]++;
-      module_t *m = get_module_by_name(module->modules[i]);
-      handle_signal_for_module(m, pulse);
+      int index = get_module_index_by_name(module->modules[i]);
+      module_t *m = &modules[index];
+      enqueue(&queue, m);
+    }
+  } else if (module->type == RELAY) {
+    for (int i = 0; i < module->module_count; i++) {
+      pulses[pulse]++;
+      int index = get_module_index_by_name(module->modules[i]);
+      module_t *m = &modules[index];
+      enqueue(&queue, m);
     }
   }
 }
 
-module_t *get_module_by_name(char *name) {
+int get_module_index_by_name(char *name) {
   for (int i = 0; i < module_total; i++) {
     if (strcmp(modules[i].name, name) == 0) {
-      return &modules[i];
+      return i;
     }
   }
-  return NULL;
+  return 0;
 }
