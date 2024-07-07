@@ -82,11 +82,6 @@ int main() {
   modules = malloc(sizeof(module_t) * lines);
   rewind(input);
   for (int i = 0; fgets(line, sizeof(line), input); i++) {
-    if (line[0] == '%' || line[0] == '&') {
-      for (int j = 0; j < strlen(line) - 1; j++) {
-        line[j] = line[j + 1];
-      }
-    }
     char *module_name = strtok(line, " ");
     if (strcmp(module_name, "broadcaster") == 0) {
       broadcaster_index = i;
