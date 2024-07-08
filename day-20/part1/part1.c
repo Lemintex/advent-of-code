@@ -12,17 +12,17 @@ typedef struct input_memory {
   pulse_e pulse;
 } input_memory_t;
 
-typedef union module_memory {
+typedef struct module_memory {
   pulse_e pulse;
   input_memory_t *inputs;
-} module_memory_u;
+} module_memory_t;
 
 typedef struct module {
   module_type_e type;
   char *name;
   char **targets;
   int target_count;
-  module_memory_u memory;
+  module_memory_t memory;
 } module_t;
 
 module_t *modules;
@@ -60,48 +60,32 @@ int main() {
       strcpy(modules[i].name, first + 1);
     }
 
+    char *rest = strtok(NULL, "\n");
+    rest += 3;
     // set up the module targets
-    char *UNUSED_ARROW = strtok(NULL, " ");
-
-    int target_count = 0;
-    char *target[16];
-    while ((target[target_count] = strtok(NULL, ", ")) != NULL) {
-      target_count++;
-    }
-    modules[i].target_count = target_count;
-    printf("Target count: %d\n", target_count);
-    modules[i].targets = (char **)malloc(sizeof(char *) * target_count);
-    for (int j = 0; j < target_count; j++) {
-      modules[i].targets[j] = (char *)malloc(sizeof(char) * strlen(target[j]));
-      strcpy(modules[i].targets[j], target[j]);
-      printf("Target %d: %s\n", j, modules[i].targets[j]);
-    }
-
-    // set up the module memory
-    if (modules[i].type == FLIPFLOP) {
-      modules[i].memory.pulse = LOW;
-    } else {
-      modules[i].memory.inputs = NULL;
+    char *target = strtok(rest, ",");
+    while (target != NULL) {
+      modules[i].targets = (char **)realloc(
+          modules[i].targets, sizeof(char *) * (modules[i].target_count + 1));
+      modules[i].targets[modules[i].target_count] =
+          (char *)malloc(sizeof(char) * strlen(target));
+      strcpy(modules[i].targets[modules[i].target_count], target);
+      modules[i].target_count++;
+      target = strtok(NULL, ",");
+      printf("Target: %s\n", modules[i].targets[modules[i].target_count - 1]);
+      printf(("Length: %d\n"),
+             strlen(modules[i].targets[modules[i].target_count - 1]));
+      if (target != NULL) {
+        target += 1;
+      }
     }
   }
+  // debug print
   for (int i = 0; i < module_count; i++) {
+    printf("Module %d: %s\n", i, modules[i].name);
+    printf("Type: %d\n", modules[i].type);
     for (int j = 0; j < modules[i].target_count; j++) {
-      printf("Module %d: %s\n", i, modules[i].targets[j]);
-      printf("Module count: %d\n", module_count);
-      for (int k = 0; k < module_count; k++) {
-        printf("Comparing");
-        printf("Module %d: %s\n", k, modules[k].name);
-        if (modules[k].type == BROADCAST) {
-          continue;
-          printf("Broadcast\n");
-        }
-        printf("Comparing %s to %s\n", modules[i].targets[j], modules[k].name);
-        printf("Length: %d\n", strlen(modules[i].targets[j]));
-        printf("Length: %d\n", strlen(modules[k].name));
-        if (strcmp(modules[i].targets[j], modules[k].name) == 0) {
-          printf("Matched\n");
-        }
-      }
+      printf("Target %d: %s\n", j, modules[i].targets[j]);
     }
   }
 }
