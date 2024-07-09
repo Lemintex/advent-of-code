@@ -15,6 +15,7 @@ typedef struct input_memory {
 typedef struct module_memory {
   pulse_e pulse;
   input_memory_t *inputs;
+  int input_count;
 } module_memory_t;
 
 typedef struct module {
@@ -80,12 +81,25 @@ int main() {
       }
     }
   }
+
   // debug print
   for (int i = 0; i < module_count; i++) {
     printf("Module %d: %s\n", i, modules[i].name);
-    printf("Type: %d\n", modules[i].type);
     for (int j = 0; j < modules[i].target_count; j++) {
       printf("Target %d: %s\n", j, modules[i].targets[j]);
+    }
+  }
+  // set up the module targets
+  for (int i = 0; i < module_count; i++) {
+    for (int j = 0; j < modules[i].target_count; j++) {
+      for (int k = 0; k < module_count; k++) {
+        if (strcmp(modules[i].targets[j], modules[k].name) == 0) {
+          modules[k].memory.inputs = (input_memory_t *)realloc(
+              modules[k].memory.inputs,
+              sizeof(input_memory_t) * (++modules[k].memory.input_count));
+          break;
+        }
+      }
     }
   }
 }
