@@ -43,6 +43,9 @@ int main() {
   modules = (module_t *)malloc(sizeof(module_t) * lines);
   int module_count = lines;
   for (int i = 0; fgets(line, sizeof(line), input); i++) {
+    modules[i].memory.input_count = 0;
+    modules[i].memory.inputs = NULL;
+    modules[i].memory.pulse = LOW;
     printf("Line %d: %s", i, line);
 
     // set up the module type
@@ -59,6 +62,9 @@ int main() {
     if (modules[i].type != BROADCAST) {
       modules[i].name = (char *)malloc(sizeof(char) * strlen(first) - 1);
       strcpy(modules[i].name, first + 1);
+    } else {
+      modules[i].name = (char *)malloc(sizeof(char) * strlen(first));
+      strcpy(modules[i].name, first);
     }
 
     char *rest = strtok(NULL, "\n");
@@ -91,15 +97,32 @@ int main() {
   }
   // set up the module targets
   for (int i = 0; i < module_count; i++) {
+    modules[i].memory.inputs =
+        (input_memory_t *)malloc(sizeof(input_memory_t) * 0);
     for (int j = 0; j < modules[i].target_count; j++) {
       for (int k = 0; k < module_count; k++) {
+        if (i == k || modules[k].type == BROADCAST) {
+          continue;
+        }
         if (strcmp(modules[i].targets[j], modules[k].name) == 0) {
           modules[k].memory.inputs = (input_memory_t *)realloc(
               modules[k].memory.inputs,
               sizeof(input_memory_t) * (++modules[k].memory.input_count));
+          modules[k].memory.inputs[modules[k].memory.input_count - 1].name =
+              modules[i].name;
           break;
         }
       }
+    }
+  }
+  for (int i = 0; i < module_count; i++) {
+    printf("Module %d: %s\n", i, modules[i].name);
+    printf("Input count: %d\n", modules[i].memory.input_count);
+    for (int j = 0; j < modules[i].memory.input_count; j++) {
+      printf("Input %d: %s\n", j, modules[i].memory.inputs[j].name);
+    }
+    for (int j = 0; j < modules[i].target_count; j++) {
+      printf("Target %d: %s\n", j, modules[i].targets[j]);
     }
   }
 }
