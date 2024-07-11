@@ -105,11 +105,21 @@ int main() {
           continue;
         }
         if (strcmp(modules[i].targets[j], modules[k].name) == 0) {
-          modules[k].memory.inputs = (input_memory_t *)realloc(
-              modules[k].memory.inputs,
-              sizeof(input_memory_t) * (++modules[k].memory.input_count));
-          modules[k].memory.inputs[modules[k].memory.input_count - 1].name =
-              modules[i].name;
+          // allocate memory for the new input
+          modules[i].memory.inputs = (input_memory_t *)realloc(
+              modules[i].memory.inputs,
+              sizeof(input_memory_t) * (modules[i].memory.input_count + 1));
+
+          // allocate memory for the name of the input
+          modules[i].memory.inputs[modules[i].memory.input_count].name =
+              (char *)malloc(sizeof(char) * strlen(modules[k].name));
+
+          // copy the name of the input
+          strcpy(modules[i].memory.inputs[modules[i].memory.input_count].name,
+                 modules[k].name);
+
+          // increment the input count
+          modules[i].memory.input_count++;
           break;
         }
       }
