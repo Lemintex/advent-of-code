@@ -26,8 +26,51 @@ typedef struct module {
   module_memory_t memory;
 } module_t;
 
+
+typedef struct queue {
+  int front, rear, size;
+  unsigned capacity;
+  module_t **array;
+} queue_t;
+
+queue_t *create_queue(unsigned capacity) {
+  queue_t *queue = (queue_t *)malloc(sizeof(queue_t));
+  queue->capacity = capacity;
+  queue->front = queue->size = 0;
+  queue->rear = capacity - 1;
+  queue->array = (module_t **)malloc(queue->capacity * sizeof(module_t*));
+  return queue;
+}
+
+int is_full(queue_t *queue) { return (queue->size == queue->capacity); }
+
+int is_empty(queue_t *queue) { return (queue->size == 0); }
+
+void enqueue(queue_t *queue, module_t* item) {
+  if (is_full(queue)) {
+    return;
+  }
+  queue->rear = (queue->rear + 1) % queue->capacity;
+  queue->array[queue->rear] = item;
+  queue->size = queue->size + 1;
+}
+
+module_t* dequeue(queue_t *queue) {
+  if (is_empty(queue)) {
+    module_t* empty;
+    return empty;
+  }
+  module_t* item = queue->array[queue->front];
+  queue->front = (queue->front + 1) % queue->capacity;
+  queue->size = queue->size - 1;
+  return item;
+}
+int broadcast_index = 0;
 module_t *modules;
+queue_t *queue;
+
 int main() {
+  queue = create_queue(100);
   FILE *input = fopen("../input.txt", "r");
 
   // big char array to hold the line
@@ -51,6 +94,7 @@ int main() {
     // set up the module type
     char *first = strtok(line, " ");
     if (strcmp(first, "broadcaster") == 0) {
+      broadcast_index = i;
       modules[i].type = BROADCAST;
     } else if (first[0] == '%') {
       modules[i].type = FLIPFLOP;
@@ -135,4 +179,25 @@ int main() {
       printf("Target %d: %s\n", j, modules[i].targets[j]);
     }
   }
+}
+
+void do_button_presses() {
+  int low = 0;
+  int high = 0;
+  for (int i = 0; i < 1000; i++)
+  {
+    low++;
+
+    enqueue(queue, &(modules[broadcast_index]));
+    /* code */
+  }
+  
+}
+
+void button_press() {
+
+}
+
+void send_pulse() {
+
 }
