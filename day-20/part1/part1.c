@@ -162,6 +162,9 @@ int main() {
           strcpy(modules[i].memory.inputs[modules[i].memory.input_count].name,
                  modules[k].name);
 
+          // set the pulse to low
+          modules[i].memory.inputs[modules[i].memory.input_count].pulse = LOW;
+          
           // increment the input count
           modules[i].memory.input_count++;
           break;
@@ -174,6 +177,7 @@ int main() {
     printf("Input count: %d\n", modules[i].memory.input_count);
     for (int j = 0; j < modules[i].memory.input_count; j++) {
       printf("Input %d: %s\n", j, modules[i].memory.inputs[j].name);
+    printf("Pulse: %d\n", modules[i].memory.inputs[j].pulse);
     }
     for (int j = 0; j < modules[i].target_count; j++) {
       printf("Target %d: %s\n", j, modules[i].targets[j]);
