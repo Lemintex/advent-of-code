@@ -30,7 +30,7 @@ typedef struct module {
 typedef struct queue {
   int front, rear, size;
   unsigned capacity;
-  module_t **array;
+  int *array;
 } queue_t;
 
 queue_t *create_queue(unsigned capacity) {
@@ -38,7 +38,7 @@ queue_t *create_queue(unsigned capacity) {
   queue->capacity = capacity;
   queue->front = queue->size = 0;
   queue->rear = capacity - 1;
-  queue->array = (module_t **)malloc(queue->capacity * sizeof(module_t*));
+  queue->array = (int *)malloc(queue->capacity * sizeof(int));
   return queue;
 }
 
@@ -46,21 +46,21 @@ int is_full(queue_t *queue) { return (queue->size == queue->capacity); }
 
 int is_empty(queue_t *queue) { return (queue->size == 0); }
 
-void enqueue(queue_t *queue, module_t* item) {
+void enqueue(queue_t *queue, int itemIndex) {
   if (is_full(queue)) {
     return;
   }
   queue->rear = (queue->rear + 1) % queue->capacity;
-  queue->array[queue->rear] = item;
+  queue->array[queue->rear] = itemIndex;
   queue->size = queue->size + 1;
 }
 
-module_t* dequeue(queue_t *queue) {
+int dequeue(queue_t *queue) {
   if (is_empty(queue)) {
     module_t* empty;
     return empty;
   }
-  module_t* item = queue->array[queue->front];
+  int item = queue->array[queue->front];
   queue->front = (queue->front + 1) % queue->capacity;
   queue->size = queue->size - 1;
   return item;
