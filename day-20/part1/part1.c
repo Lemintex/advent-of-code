@@ -24,14 +24,20 @@ typedef struct module {
   module_targets_t target;
 } module_t;
 
+typedef struct queue_item {
+  module_t *module;
+  module_t *target;
+  pulse_e pulse;
+} queue_item_t;
+
 typedef struct queue {
   int front, rear, size;
   unsigned capacity;
-  module_t **array;
+  queue_item_t *array;
 } queue_t;
 
 void do_button_presses();
-void button_press(int *low, int *high);
+void button_press(long int *low, long int *high);
 module_t *is_in_module(module_t *mod);
 module_t *is_in_module_str(char *str);
 void send_pulse_to_targets(module_t *mod, pulse_e pulse);
@@ -43,7 +49,7 @@ queue_t *create_queue(unsigned capacity) {
   queue->capacity = capacity;
   queue->front = queue->size = 0;
   queue->rear = capacity - 1;
-  queue->array = (module_t **)malloc(queue->capacity * sizeof(module_t *));
+  queue->array = (queue_item_t *)malloc(queue->capacity * sizeof(queue_item_t));
   return queue;
 }
 
@@ -51,24 +57,26 @@ int is_full(queue_t *queue) { return (queue->size == queue->capacity); }
 
 int is_empty(queue_t *queue) { return (queue->size == 0); }
 
-void enqueue(queue_t *queue, module_t *module_ptr) {
+void enqueue(queue_t *queue, queue_item_t item) {
   if (is_full(queue)) {
     return;
   }
   queue->rear = (queue->rear + 1) % queue->capacity;
-  queue->array[queue->rear] = module_ptr;
+  queue->array[queue->rear] = item;
   queue->size = queue->size + 1;
+  // printf("\nenqued %s\n", item.target->name);
 }
 
-module_t *dequeue(queue_t *queue) {
+queue_item_t dequeue(queue_t *queue) {
   if (is_empty(queue)) {
-    return NULL;
+    return (queue_item_t){};
   }
-  module_t *mod = queue->array[queue->front];
+  queue_item_t item = queue->array[queue->front];
   queue->front = (queue->front + 1) % queue->capacity;
   queue->size = queue->size - 1;
-  return mod;
+  return item;
 }
+
 int broadcast_index = 0;
 module_t *modules;
 int module_count;
@@ -190,68 +198,83 @@ int main() {
 }
 
 void do_button_presses() {
-  int low = 0;
-  int high = 0;
-  for (int i = 0; i < 1; i++) {
+  long int low = 0;
+  long int high = 0;
+  for (int i = 0; i < 1000; i++) {
     low++;
     button_press(&low, &high);
   }
   printf("%d\n", low);
   printf("%d\n", high);
-  printf("%d\n", high * low);
+  printf("%ld\n", high * low);
 }
 
-void button_press(int *low, int *high) {
+void button_press(long int *low, long int *high) {
   for (int n = 0; n < modules[broadcast_index].target.target_count; n++) {
-    module_t *mod = is_in_module(modules[broadcast_index].target.targets[n]);
-    if (mod == NULL) {
-      continue;
-    }
-    enqueue(queue, mod);
+    module_t *broadcast = &modules[broadcast_index];
+    module_t *target = broadcast->target.targets[n];
+    queue_item_t item = (queue_item_t){broadcast, target, LOW};
+    enqueue(queue, item);
   }
+  // int num = 0;
+  // int max = 10;
   while (!is_empty(queue)) {
-    module_t *module = dequeue(queue);
-    printf("Name: %s\nType:%d\nPulse:%d\n-------------\n", module->name, module->type, module->input.pulse);
-    if (module->input.pulse == LOW) {
+    queue_item_t item = dequeue(queue);
+    // printf("Origin: %s\nTarget: %s\n Pulse: %d\n----------------------------\n", item.module->name, item.target->name, item.pulse);
+    // if (num++ == max) return;
+    module_t *origin = item.module;
+    module_t *target = item.target;
+    pulse_e pulse = item.pulse;
+    // printf("\nName: %s\nType:%d\nPulse:%d\n", target->name,
+    //        target->type, target->input.pulse);
+    // for (int i = 0; i < target->target.target_count; i++) {
+    //   printf("\nTarget %d: %s", i, target->target.targets[i]->name);
+    // }
+    if (pulse == LOW) {
       *low = *low + 1;
     } else {
       *high = *high + 1;
     }
     pulse_e output;
 
-    switch (module->type) {
+    switch (target->type) {
     case FLIPFLOP:
-      if (module->input.pulse == HIGH) {
+      if (pulse == HIGH) {
         break;
       }
       // if this guard is passed we flip the output
-      if (module->input.pulse == LOW) {
-        module->input.pulse = HIGH;
+      if (target->input.pulse == LOW) {
+        target->input.pulse = HIGH;
       } else {
-        module->input.pulse = LOW;
+        target->input.pulse = LOW;
       }
-
+      output = target->input.pulse;
+        // printf("\nTarget count: %d\n", target->target.target_count);
       // WRONG
-      for (int i = 0; i < module->target.target_count; i++) {
-        modules[i].input.pulse = module->input.pulse;
-        enqueue(queue, &modules[i]);
+      for (int i = 0; i < target->target.target_count; i++) {
+          module_t *t = is_in_module_str(target->target.targets[i]->name);
+        queue_item_t item_new = {target, t, output};
+    // printf("\nENQUE\nOrigin: %s\nTarget: %s\n Pulse: %d\n----------------------------\n", item_new.module->name, item_new.target->name, item_new.pulse);
+        enqueue(queue, item_new);
       }
 
       break;
 
     case CONJUNCTION:
-      output = HIGH;
-      for (int i = 0; module->input.input_count; i++) {
-        if (module->input.inputs[i]->input.pulse == LOW) {
-          output = LOW;
+      output = LOW;
+      for (int i = 0; target->input.input_count; i++) {
+        if (target->input.inputs[i]->input.pulse == LOW) {
+          output = HIGH;
           break;
         }
       }
 
-      module->input.pulse = output;
-      for (int i = 0; i < module->target.target_count; i++) {
-        modules[i].input.pulse = module->input.pulse;
-        enqueue(queue, &modules[i]);
+      origin->input.pulse = output;
+        // printf("\nTarget count: %d\n", target->target.target_count);
+      for (int i = 0; i < target->target.target_count; i++) {
+          module_t *t = is_in_module_str(target->target.targets[i]->name);
+        queue_item_t item_new = (queue_item_t){target, t, output};
+        enqueue(queue, item_new);
       }
 
       break;
@@ -316,3 +339,4 @@ module_t *is_in_module_str(char *str) {
 //   for (int t = 0; t < mod->target_count; t++) {
 //   }
 // }
+// 3268229565 too high
