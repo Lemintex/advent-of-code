@@ -7,26 +7,28 @@ typedef enum pulse { LOW, HIGH } pulse_e;
 
 typedef struct module module_t;
 typedef struct module_memory {
-  pulse_e pulse;
-  module_t **inputs;
+  char **input_name;
+  pulse_e *pulse;
   int input_count;
 } module_memory_t;
 
 typedef struct module_targets {
-  module_t **targets;
+  char **target_name;
+  pulse_e *pulse;
   int target_count;
 } module_targets_t;
 
 typedef struct module {
   module_type_e type;
   char *name;
+  pulse_e pulse;
   module_memory_t input;
   module_targets_t target;
 } module_t;
 
 typedef struct queue_item {
-  module_t *module;
-  module_t *target;
+  char* module_name;
+  char* target_name;
   pulse_e pulse;
 } queue_item_t;
 
@@ -101,8 +103,7 @@ int main() {
   module_count = lines;
   for (int i = 0; fgets(line, sizeof(line), input); i++) {
     modules[i].input.input_count = 0;
-    modules[i].input.inputs = NULL;
-    modules[i].input.pulse = LOW;
+    modules[i].target.target_count = 0;
     printf("Line %d: %s", i, line);
 
     // set up the module type
@@ -135,16 +136,15 @@ int main() {
     // set up the module targets
     printf("Mod %d: \n", i);
     char *target = strtok(rest[i], ",\n");
-    while (target != NULL) {
+    for (int str = 0; target != NULL; str++) {
       // printf("%s len %d, ", target, strlen(target));
       for (int l = 0; l < strlen(target); l++) {
         printf("%d ", target[l]);
       }
-      modules[i].target.targets = (module_t **)realloc(
-          modules[i].target.targets,
-          sizeof(module_t *) * modules[i].target.target_count + 1);
-      module_t *t = is_in_module_str(target);
-      modules[i].target.targets[modules[i].target.target_count] = t;
+      modules[i].target.target_name =
+          (char **)realloc(modules[i].target.target_name,
+                           sizeof(char *) * modules[i].target.target_count + 1);
+      modules[i].target.target_name[str] = strdup(target);
       modules[i].target.target_count++;
       target = strtok(NULL, "\n,");
       if (target != NULL) {
@@ -157,28 +157,19 @@ int main() {
   for (int i = 0; i < module_count; i++) {
     printf("Module %d: %s\n", i, modules[i].name);
     for (int j = 0; j < modules[i].target.target_count; j++) {
-      printf("Target %d: %s\n", j, modules[i].target.targets[j]->name);
+      printf("Target %d: %s\n", j, modules[i].target.target_name[j]);
     }
   }
   // set up the module inputs
   for (int i = 0; i < module_count; i++) {
     printf("%d\n", i);
-    modules[i].input.inputs = (module_t **)malloc(0);
-    for (int j = 0; j < modules[i].target.target_count; j++) {
-      for (int k = 0; k < module_count; k++) {
-        if (i == k || modules[k].type == BROADCAST || i == 54) {
-          continue;
-        }
-        if (strcmp(modules[i].target.targets[j]->name, modules[k].name) == 0) {
-          // allocate memory for the new input
-          modules[i].input.inputs = (module_t **)realloc(
-              modules[i].input.inputs,
-              sizeof(module_t *) * (modules[i].input.input_count + 1));
-          modules[i].input.inputs[modules[i].input.input_count] = &modules[k];
-
-          // increment the input count
+    modules[i].input.input_name = (char **)malloc(0);
+    for (int j = 0; j < module_count; j++) {
+      for (int k = 0; k < modules[j].target.target_count; k++) {
+        if (strcmp(modules[j].target.target_name[k], modules[i].name) == 0) {
+          modules[i].input.input_name = (char**)realloc(modules[i].input.input_name, sizeof(char*) * modules[i].input.input_count + 1);
+          modules[i].input.input_name[modules[i].input.input_count] = strdup(modules[j].name);
           modules[i].input.input_count++;
-          break;
         }
       }
     }
@@ -187,11 +178,10 @@ int main() {
     printf("Module %d: %s\n", i, modules[i].name);
     printf("Input count: %d\n", modules[i].input.input_count);
     for (int j = 0; j < modules[i].input.input_count; j++) {
-      printf("Input %d: %s\n", j, modules[i].input.inputs[j]->name);
-      printf("Pulse: %d\n", modules[i].input.inputs[j]->input.pulse);
+      printf("Input %d: %s\n", j, modules[i].input.input_name[j]);
     }
     for (int j = 0; j < modules[i].target.target_count; j++) {
-      printf("Target %d: %s\n", j, modules[i].target.targets[j]->name);
+      printf("Target %d: %s\n", j, modules[i].target.target_name[j]);
     }
   }
   do_button_presses();
@@ -200,7 +190,7 @@ int main() {
 void do_button_presses() {
   long int low = 0;
   long int high = 0;
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 1; i++) {
     low++;
     button_press(&low, &high);
   }
@@ -212,19 +202,22 @@ void do_button_presses() {
 void button_press(long int *low, long int *high) {
   for (int n = 0; n < modules[broadcast_index].target.target_count; n++) {
     module_t *broadcast = &modules[broadcast_index];
-    module_t *target = broadcast->target.targets[n];
-    queue_item_t item = (queue_item_t){broadcast, target, LOW};
+    char* target = broadcast->target.target_name[n];
+    queue_item_t item = (queue_item_t){broadcast->name, target, LOW};
     enqueue(queue, item);
   }
-  // int num = 0;
-  // int max = 10;
+int num = 0;
+int max = 10;
   while (!is_empty(queue)) {
     queue_item_t item = dequeue(queue);
-    // printf("Origin: %s\nTarget: %s\n Pulse: %d\n----------------------------\n", item.module->name, item.target->name, item.pulse);
-    // if (num++ == max) return;
-    module_t *origin = item.module;
-    module_t *target = item.target;
+    // printf("Origin: %s\nTarget: %s\n Pulse:
+    // %d\n----------------------------\n", item.module->name,
+    // item.target->name, item.pulse); if (num++ == max) return;
+    module_t *origin = is_in_module_str(item.module_name);
+    module_t *target = is_in_module_str(item.target_name);
     pulse_e pulse = item.pulse;
+    printf("\n%s -%s-> %s", origin->name, pulse == LOW ? "low" : "high",
+           target->name);
     // printf("\nName: %s\nType:%d\nPulse:%d\n", target->name,
     //        target->type, target->input.pulse);
     // for (int i = 0; i < target->target.target_count; i++) {
@@ -243,37 +236,47 @@ void button_press(long int *low, long int *high) {
         break;
       }
       // if this guard is passed we flip the output
-      if (target->input.pulse == LOW) {
-        target->input.pulse = HIGH;
+      if (target->pulse == LOW) {
+        target->pulse = HIGH;
       } else {
-        target->input.pulse = LOW;
+        target->pulse = LOW;
       }
-      output = target->input.pulse;
-        // printf("\nTarget count: %d\n", target->target.target_count);
+      output = target->pulse;
+      printf("\n%s: %s", target->name,
+             target->pulse == LOW ? "low" : "high");
+      // printf("\nTarget count: %d\n", target->target.target_count);
       // WRONG
       for (int i = 0; i < target->target.target_count; i++) {
-          module_t *t = is_in_module_str(target->target.targets[i]->name);
-        queue_item_t item_new = {target, t, output};
-    // printf("\nENQUE\nOrigin: %s\nTarget: %s\n Pulse: %d\n----------------------------\n", item_new.module->name, item_new.target->name, item_new.pulse);
+        module_t *t = is_in_module_str(target->target.target_name[i]);
+        queue_item_t item_new = {target->name, t->name, output};
+        // printf("\nENQUE\nOrigin: %s\nTarget: %s\n Pulse:
+        // %d\n----------------------------\n", item_new.module->name,
+        // item_new.target->name, item_new.pulse);
         enqueue(queue, item_new);
       }
 
       break;
 
     case CONJUNCTION:
+      // set the origin memory = pulse
+
+      for (int i = 0; i < target->input.input_count; i++) {
+        if (strcmp(origin->name, target->input.input_name[i]) == 0) {
+          is_in_module_str(target->input.input_name[i])->pulse = pulse;
+            break;
+        }
+      }
       output = LOW;
-      for (int i = 0; target->input.input_count; i++) {
-        if (target->input.inputs[i]->input.pulse == LOW) {
+      for (int i = 0; i < target->input.input_count; i++) {
+        if (is_in_module_str(target->input.input_name[i])->pulse == LOW) {
           output = HIGH;
           break;
         }
       }
 
-      origin->input.pulse = output;
-        // printf("\nTarget count: %d\n", target->target.target_count);
       for (int i = 0; i < target->target.target_count; i++) {
-          module_t *t = is_in_module_str(target->target.targets[i]->name);
-        queue_item_t item_new = (queue_item_t){target, t, output};
+        module_t *t = is_in_module_str(target->target.target_name[i]);
+        queue_item_t item_new = (queue_item_t){target->name, t->name, output};
         enqueue(queue, item_new);
       }
 
