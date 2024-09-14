@@ -6,6 +6,7 @@ typedef enum module_type { FLIPFLOP, CONJUNCTION, BROADCAST } module_type_e;
 typedef enum pulse { LOW, HIGH } pulse_e;
 
 typedef struct module module_t;
+typedef struct module_cycle module_cycle_t;
 typedef struct module_memory {
   char **input_name;
   pulse_e *pulse;
@@ -18,12 +19,18 @@ typedef struct module_targets {
   int target_count;
 } module_targets_t;
 
+typedef struct module_cycle {
+  int cycle_len; // first pass - set to presses ||| second pass - set to presses - cycle_len
+  int seen_count;
+} module_cycle_t;
+
 typedef struct module {
   module_type_e type;
   char *name;
   pulse_e pulse;
   module_memory_t input;
   module_targets_t target;
+  module_cycle_t cycle;
 } module_t;
 
 typedef struct queue_item {
@@ -45,6 +52,7 @@ module_t *is_in_module_str(char *str);
 void send_pulse_to_targets(module_t *mod, pulse_e pulse);
 void update_targets_memory_flipflop(module_t *mod);
 void update_targets_memory_conjunction(module_t *mod);
+int are_all_cycles_finished();
 
 queue_t *create_queue(unsigned capacity) {
   queue_t *queue = (queue_t *)malloc(sizeof(queue_t));
@@ -101,6 +109,9 @@ int main() {
   modules = (module_t *)malloc(sizeof(module_t) * lines);
   module_count = lines;
   for (int i = 0; fgets(line, sizeof(line), input); i++) {
+    modules[i].cycle.cycle_len = 0;
+    modules[i].cycle.seen_count = 0;
+
     modules[i].input.input_count = 0;
     modules[i].target.target_count = 0;
 
@@ -163,27 +174,54 @@ int main() {
   do_button_presses();
 }
 
+// assuming that for all module states, there is a fixes number of button presses to reach that state again
 void do_button_presses() {
-  for (int i = 0; i < 1000; i++) {
-    button_press();
+  module_t* rx = is_in_module_str("rx");
+  module_t* input = is_in_module_str(rx->input.input_name[0]);
+  module_t* in_modules[input->input.input_count];
+  for (int i = 0; i < input->input.input_count; i++) {
+    in_modules[i] = is_in_module_str(input->input.input_name[i]);
+  }
+  int in_counts[4] = {0};
+  while (1) {
+    button_press(in_modules, in_counts, 4);
+    int br = are_all_cycles_finished();
+    if (br == 1) {
+      long int total = 1;
+      for (int c = 0; c < 4; c++) {
+        total *= in_modules[c]->cycle.cycle_len;
+      }
+      printf("\nTotal: %ld", total);
+    }
   }
 }
 
-void button_press() {
+void button_press(module_t* in_modules[], int* indexes, int len) {
+  static int presses = 0;
+  presses++;
   for (int n = 0; n < modules[broadcast_index].target.target_count; n++) {
     module_t *broadcast = &modules[broadcast_index];
     char *target = broadcast->target.target_name[n];
     queue_item_t item = (queue_item_t){broadcast->name, target, LOW};
     enqueue(queue, item);
   }
-  int num = 0;
-  int max = 10;
   while (!is_empty(queue)) {
     queue_item_t item = dequeue(queue);
     module_t *origin = is_in_module_str(item.module_name);
     module_t *target = is_in_module_str(item.target_name);
     pulse_e pulse = item.pulse;
     pulse_e output;
+
+    // does the current module have a cycle length
+    if (origin->cycle.seen_count < 2 && pulse == HIGH) {
+      if (origin->cycle.seen_count == 0) {
+        origin->cycle.cycle_len = presses;
+      }
+      else {
+        origin->cycle.cycle_len = presses - origin->cycle.cycle_len;
+      }
+      origin->cycle.seen_count++;
+    }
 
     switch (target->type) {
     case FLIPFLOP:
@@ -247,4 +285,14 @@ module_t *is_in_module_str(char *str) {
     }
   }
   return NULL;
+}
+
+int are_all_cycles_finished() {
+  for (int i = 0; i < module_count; i++) {
+    if (modules[i].cycle.seen_count < 2 && (strcmp(modules[i].name, "rx") != 0 && strcmp(modules[i].name, "broadcaster") != 0)) {
+      printf("\nModule %s not cycled", modules[i].name);
+      return 0;
+    }
+  }
+  return 1;
 }
