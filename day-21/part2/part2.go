@@ -4,13 +4,22 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"math"
 )
 
-type visitedNode struct {
+type node struct {
 	x, y int
 }
 
-var steps int = 64
+type visitedNode struct {
+	x, y int
+	steps int
+}
+
+var stepTotal int = 26501365
+var gridSize int
+var width int
+var odd, even int
 var sX, sY int
 var lines []string
 
@@ -27,87 +36,79 @@ func main() {
 			}
 		}
 	}
-	traverseGarden()
+	gridSize = len(lines) - 1
+	width = stepTotal / gridSize - 1
+
+	var oddTemp float64 = float64((width / 2) * 2 + 1)
+	odd = int(math.Pow(oddTemp, 2))
+	oddPoints := traverseGarden(sX, sY, gridSize * 2 + 1)
+	
+	var evenTemp float64 = float64(((width + 1) / 2) * 2)
+	even = int(math.Pow(evenTemp, 2))
+	evenPoints := traverseGarden(sX, sY, gridSize * 2)
+
+	//corners
+	topCorner := traverseGarden(sX, gridSize - 1,  gridSize - 1)
+	bottomCorner := traverseGarden(sX, 0, gridSize - 1)
+	leftCorner := traverseGarden(gridSize - 1, sY, gridSize - 1)
+	rightCorner := traverseGarden(0, sY, gridSize - 1)
+	cornerTotal := topCorner + bottomCorner + leftCorner + rightCorner
+
+	// small segments
+	smallTopRight := traverseGarden(gridSize -1, 0, gridSize / 2 - 1)
+	smallTopLeft:= traverseGarden(gridSize -1, gridSize - 1, gridSize / 2 - 1)
+	smallBottomRight := traverseGarden(0, 0, gridSize / 2 - 1)
+	smallBottomLeft := traverseGarden(0, gridSize - 1, gridSize / 2 - 1)
+	smalTotal := (width + 1) * (smallTopRight + smallTopLeft + smallBottomRight + smallBottomLeft)
+
+	// large segments
+	largeTopRight :=  traverseGarden(gridSize -1, 0, (gridSize * 3) / 2 - 1)
+	largeTopLeft := traverseGarden(gridSize -1, gridSize - 1, (gridSize * 3) / 2 - 1) 
+	largeBottomRight :=  traverseGarden(0, 0, (gridSize * 3) / 2 - 1)
+	largeBottomLeft :=  traverseGarden(0, gridSize - 1, (gridSize * 3) / 2 - 1)
+	largeTotal := width * (largeTopRight + largeTopLeft + largeBottomRight + largeBottomLeft)
+
+	fmt.Println("Total:",odd * oddPoints + even * evenPoints	+ cornerTotal + smalTotal + largeTotal)
 }
 
-func traverseGarden() {
-	nodes := make(map[visitedNode]struct{})
-	init := visitedNode{
-		x: sX,
-		y: sY,
+func traverseGarden(ix, iy, isteps int) int {
+	// maps and queue
+	ans := make(map[[2]int]struct{})
+	seen := make(map[[2]int]struct{})
+	var q []visitedNode
+
+	initVisitedNode := visitedNode{
+		x: ix,
+		y: iy,
+		steps: isteps,
 	}
-	nodes[init] = struct{}{}
-	for {
-		corner := visitedNode{
-			x: 0,
-			y: 0,
-		}
-		_, ok := nodes[corner]
-		if ok {
-			printMap(nodes)
-			break
-		}
-		newNodes := make(map[visitedNode]struct{})
-		// var newNodes []visitedNode
-		for n, _ := range nodes {
-			//check 4 sides
-			//above
-			if n.y > 0 && lines[n.y-1][n.x] != '#' {
-				newNode := visitedNode{
-					x: n.x,
-					y: n.y - 1,
-				}
-				newNodes[newNode] = struct{}{}
-			}
+	q = append(q, initVisitedNode)
+	for len(q) > 0 {
+		// pop the front of the queue
+		current := q[0]
+		q = q[1:]
 
-			//below
-			if n.y < len(lines)-2 && lines[n.y+1][n.x] != '#' { // why -2? idk
-				newNode := visitedNode{
-					x: n.x,
-					y: n.y + 1,
-				}
-				newNodes[newNode] = struct{}{}
-			}
-
-			//left
-			if n.x > 0 && lines[n.y][n.x-1] != '#' {
-				newNode := visitedNode{
-					x: n.x - 1,
-					y: n.y,
-				}
-				newNodes[newNode] = struct{}{}
-			}
-
-			//right
-			if n.x < len(lines[0])-1 && lines[n.y][n.x+1] != '#' {
-				newNode := visitedNode{
-					x: n.x + 1,
-					y: n.y,
-				}
-				newNodes[newNode] = struct{}{}
-			}
+		if current.steps % 2 == 0 {
+			even := [2]int{current.x, current.y}
+			ans[even] = struct{}{}
 		}
-		nodes = newNodes
-		// printMap(nodes)
+		if current.steps == 0 {
+			continue
+		}
+		cardinals := [][2]int{{current.x, current.y - 1}, {current.x, current.y + 1}, {current.x - 1, current.y}, {current.x + 1, current.y}} // this slice of [2]int's represents the 4 cardinal directions (up, down, left, right)
+		for _, dir := range cardinals {
+			_, ok := seen[dir]
+			if dir[0] < 0 || dir[0] >= len(lines[0]) || dir[1] < 0 || dir[1] >= len(lines) - 1 || lines[dir[1]][dir[0]] == '#' || ok { // if index is invalid, node is #, or node is seen already, skip it
+				continue
+			}
+			seen[dir] = struct{}{}
+			dirVisitedNode := visitedNode {
+				x: dir[0],
+				y: dir[1],
+				steps: current.steps - 1,
+			}
+			q = append(q, dirVisitedNode)
+		}
 	}
-	fmt.Println(len(nodes))
-}
-
-func printMap(nodes map[visitedNode]struct{}) {
-	fmt.Println(nodes)
-	for y, l := range lines {
-		for x, c := range l {
-			temp := visitedNode{
-				x: x,
-				y: y,
-			}
-			_, ok := nodes[temp]
-			if ok {
-				fmt.Print("0")
-			} else {
-				fmt.Print(string(c))
-			}
-		}
-		fmt.Println()
-	}
+	return len(ans)
 }
