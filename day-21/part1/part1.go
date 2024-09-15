@@ -39,7 +39,6 @@ func traverseGarden() {
 	nodes[init] = struct{}{}
 	for range steps {
 		newNodes := make(map[visitedNode]struct{})
-		// var newNodes []visitedNode
 		for n, _ := range nodes {
 			//check 4 sides
 			//above
@@ -79,26 +78,6 @@ func traverseGarden() {
 			}
 		}
 		nodes = newNodes
-		// printMap(nodes)
 	}
-	fmt.Println(len(nodes))
-}
-
-func printMap(nodes map[visitedNode]struct{}) {
-	fmt.Println(nodes)
-	for y, l := range lines {
-		for x, c := range l {
-			temp := visitedNode{
-				x: x,
-				y: y,
-			}
-			_, ok := nodes[temp]
-			if ok {
-				fmt.Print("0")
-			} else {
-				fmt.Print(string(c))
-			}
-		}
-		fmt.Println()
-	}
+	fmt.Println("Ans:", len(nodes))
 }
