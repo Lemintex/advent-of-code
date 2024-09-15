@@ -6,8 +6,13 @@ import (
 	"strings"
 )
 
+type node struct {
+	x, y int
+}
+
 type visitedNode struct {
 	x, y int
+	steps int
 }
 
 var steps int = 64
@@ -31,53 +36,45 @@ func main() {
 }
 
 func traverseGarden() {
-	nodes := make(map[visitedNode]struct{})
-	init := visitedNode{
+	// maps and queue
+	ans := make(map[[2]int]struct{})
+	seen := make(map[[2]int]struct{})
+	var q []visitedNode
+
+	initVisitedNode := visitedNode{
 		x: sX,
 		y: sY,
+		steps: steps,
 	}
-	nodes[init] = struct{}{}
-	for range steps {
-		newNodes := make(map[visitedNode]struct{})
-		for n, _ := range nodes {
-			//check 4 sides
-			//above
-			if n.y > 0 && lines[n.y-1][n.x] != '#' {
-				newNode := visitedNode{
-					x: n.x,
-					y: n.y - 1,
-				}
-				newNodes[newNode] = struct{}{}
-			}
+	q = append(q, initVisitedNode)
+	for len(q) > 0 {
+		// pop the front of the queue
+		current := q[0]
+		q = q[1:]
 
-			//below
-			if n.y < len(lines) && lines[n.y+1][n.x] != '#' {
-				newNode := visitedNode{
-					x: n.x,
-					y: n.y + 1,
-				}
-				newNodes[newNode] = struct{}{}
-			}
-
-			//left
-			if n.x > 0 && lines[n.y][n.x-1] != '#' {
-				newNode := visitedNode{
-					x: n.x - 1,
-					y: n.y,
-				}
-				newNodes[newNode] = struct{}{}
-			}
-
-			//right
-			if n.x < len(lines[0]) && lines[n.y][n.x+1] != '#' {
-				newNode := visitedNode{
-					x: n.x + 1,
-					y: n.y,
-				}
-				newNodes[newNode] = struct{}{}
-			}
+		if current.steps % 2 == 0 {
+			even := [2]int{current.x, current.y}
+			ans[even] = struct{}{}
 		}
-		nodes = newNodes
+		if current.steps == 0 {
+			continue
+		}
+		cardinals := [][2]int{{current.x, current.y - 1}, {current.x, current.y + 1}, {current.x - 1, current.y}, {current.x + 1, current.y}} // this slice of [2]int's represents the 4 cardinal directions (up, down, left, right)
+		for _, dir := range cardinals {
+			_, ok := seen[dir]
+			if dir[0] < 0 || dir[0] >= len(lines[0]) || dir[1] < 0 || dir[1] >= len(lines) - 1 || lines[dir[1]][dir[0]] == '#' || ok { // if index is invalid, node is #, or node is seen already, skip it
+				continue
+			}
+			seen[dir] = struct{}{}
+			dirVisitedNode := visitedNode {
+				x: dir[0],
+				y: dir[1],
+				steps: current.steps - 1,
+			}
+			q = append(q, dirVisitedNode)
+		}
+
+
 	}
-	fmt.Println("Ans:", len(nodes))
+	fmt.Println("Ans:", len(ans))
 }
