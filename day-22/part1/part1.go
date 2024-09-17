@@ -25,12 +25,14 @@ type brick struct {
 var minX, minY, maxX, maxY, lenX, lenY int
 var bricks brick
 var brickMap []string
+var mapHeight [][]int
 func main() {
 	minX, minY = 1000000, 1000000
 	f, err := os.ReadFile("../input.txt")
 	if err != nil {
 		panic("err`=")
 	}
+	brickMap = strings.Split(string(f), "\n")
 	for _, l := range brickMap {
 		ends := strings.Split(l, "~")
 		// TODO: find proper fix
