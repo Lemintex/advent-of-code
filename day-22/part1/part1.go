@@ -13,10 +13,10 @@ type vec3 struct {
 }
 
 type brick struct {
-	ID                int
-	bottom, top       vec3
-	length, width     int
-	bricksHoldingMeUp map[int]struct{}
+	ID                    rune
+	bottom, top           vec3
+	length, width, height int
+	bricksHoldingMeUp     *int
 }
 
 type mapInfo struct {
@@ -69,12 +69,13 @@ func main() {
 			z: v2Z,
 		}
 		brick := brick{
-			ID:                i + 1,
+			ID:                rune('A' + i),
 			bottom:            v1,
 			top:               v2,
 			length:            v2X - v1X + 1,
 			width:             v2Y - v1Y + 1,
-			bricksHoldingMeUp: make(map[int]struct{}),
+			height:            v2Z - v1Z + 1,
+			bricksHoldingMeUp: new(int),
 		}
 		brick.PrintBrick()
 		bricks = append(bricks, &brick)
@@ -97,27 +98,9 @@ func (b *brick) PrintBrick() {
 
 func CreateStackOnGround() {
 	for i, b := range bricks {
-		fmt.Printf("\nBrick %d:", i+1)
-		diff := b.top.z - b.bottom.z
-		if i == 0 {
-			b.bottom.z = 0
-			b.top.z = b.bottom.z + diff
-			continue
-		}
-		for _, under := range bricks[:i-1] {
-			if DoBricksIntersect(b, under) {
-				//THE HIGHER RESTS ON THE LOWER
-				fmt.Println("Intersected")
-				diff := b.top.z - b.bottom.z
-				b.bottom.z = under.top.z + 1
-				b.top.z = b.bottom.z + diff
-				goto found
-			}
-		}
-		b.bottom.z = 0
-		b.top.z = b.bottom.z + diff
+		for j, u := range bicks[:i-1] {
 
-	found:
+		}
 	}
 
 	for _, b := range bricks {
@@ -127,7 +110,7 @@ func CreateStackOnGround() {
 
 func DoBricksIntersect(falling, stationary *brick) bool {
 	//TODO:implement
-	return falling.bottom.x < stationary.top.x && falling.top.x > stationary.bottom.x && falling.bottom.y < stationary.top.y && falling.top.y > stationary.bottom.y
+	return max(falling.bottom.x, stationary.bottom.x) <= min(falling.top.x, stationary.top.x) && max(falling.bottom.y, stationary.bottom.y) <= min(falling.top.y, stationary.top.y)
 }
 
 func GetNumberOfBricksThatCanBeDisintegrated() {
@@ -143,5 +126,5 @@ func GetNumberOfBricksThatCanBeDisintegrated() {
 }
 func (b *brick) CanDisintegrate() bool {
 	//TODO: implement
-	return len(b.bricksHoldingMeUp) > 1
+	return *b.bricksHoldingMeUp > 1
 }
