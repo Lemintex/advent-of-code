@@ -16,7 +16,7 @@ type brick struct {
 	ID                    rune
 	bottom, top           vec3
 	length, width, height int
-	bricksHoldingMeUp     *int
+	supports, supportedBy map[*brick]struct{}
 }
 
 type mapInfo struct {
@@ -75,7 +75,8 @@ func main() {
 			length:            v2X - v1X + 1,
 			width:             v2Y - v1Y + 1,
 			height:            v2Z - v1Z + 1,
-			bricksHoldingMeUp: new(int),
+			supports: make(map[*brick]struct{}),
+			supportedBy: make(map[*brick]struct{}),
 		}
 		brick.PrintBrick()
 		bricks = append(bricks, &brick)
@@ -88,6 +89,7 @@ func main() {
 		return a.bottom.z - b.bottom.z
 	})
 	CreateStackOnGround()
+	GetNumHoldingUpOfBricks()
 	GetNumberOfBricksThatCanBeDisintegrated()
 }
 
@@ -98,16 +100,61 @@ func (b *brick) PrintBrick() {
 
 func CreateStackOnGround() {
 	for i, b := range bricks {
-		for j, u := range bicks[:i-1] {
-
+		maxZ := 0
+		if i == 0 {
+			continue
 		}
-	}
-
-	for _, b := range bricks {
-		fmt.Println(b)
+		for _, u := range bricks[:i] {
+			if DoBricksIntersect(b, u) {
+				if maxZ < u.top.z + 1 {
+					maxZ = u.top.z + 1
+				}
+			}
+		}
+		b.bottom.z = maxZ
+		b.top.z = maxZ + b.height - 1
 	}
 }
 
+func GetNumHoldingUpOfBricks() {
+	for j, upper := range bricks {
+		for _, lower := range bricks[:j] {
+			if !DoBricksIntersect(lower, upper) || upper.bottom.z != lower.top.z + 1 {
+				continue
+			}
+			lower.supports[upper] = struct{}{}
+			upper.supportedBy[lower] = struct{}{}
+		}
+	}
+	for _, b := range bricks {
+		fmt.Println(b.supports, b.supportedBy)
+	}
+	ans := 0
+	for i := 0; i < len(bricks); i++ {
+		if len(bricks[i].supports) == 0 {
+			fmt.Println("Nothing on top of", bricks[i])
+			ans++
+			continue
+		}
+		if i == 0 {
+			continue
+		}
+		count := 0
+		for _, lower := range bricks {
+			for k, _ := range bricks[i].supportedBy {
+				_, exists := lower.supports[k]
+				if exists {
+					count++
+				}
+			}
+		}
+		if count > 0 {
+			fmt.Println(string(bricks[i].ID), "can be disintegrated safely")
+			ans++
+		}
+	}
+	fmt.Println(ans)
+}
 func DoBricksIntersect(falling, stationary *brick) bool {
 	//TODO:implement
 	return max(falling.bottom.x, stationary.bottom.x) <= min(falling.top.x, stationary.top.x) && max(falling.bottom.y, stationary.bottom.y) <= min(falling.top.y, stationary.top.y)
@@ -115,16 +162,9 @@ func DoBricksIntersect(falling, stationary *brick) bool {
 
 func GetNumberOfBricksThatCanBeDisintegrated() {
 
-	total := 0
-	for _, b := range bricks {
-		if b.CanDisintegrate() {
-			fmt.Println("Disintegrate!", b.ID)
-			total++
-		}
-	}
-	fmt.Println("Total:", total)
 }
+
 func (b *brick) CanDisintegrate() bool {
 	//TODO: implement
-	return *b.bricksHoldingMeUp > 1
+	return false
 }
