@@ -15,18 +15,13 @@ type vec3 struct {
 type brick struct {
 	ID                    rune
 	bottom, top           vec3
-	length, width, height int
+	height                int
 	supports, supportedBy map[*brick]struct{}
-}
-
-type mapInfo struct {
-	height, brickID int
 }
 
 var minX, minY, maxX, maxY, lenX, lenY int
 var bricks []*brick
 var brickMap []string
-var mapHeight [][]mapInfo
 
 func main() {
 	minX, minY = 1000000, 1000000
@@ -41,7 +36,6 @@ func main() {
 		if len(ends) == 1 { // temporary
 			break
 		}
-		fmt.Println(ends)
 		b1, b2 := strings.Split(ends[0], ","), strings.Split(ends[1], ",")
 
 		v1X, _ := strconv.Atoi(b1[0])
@@ -72,9 +66,7 @@ func main() {
 			ID:          rune('A' + i),
 			bottom:      v1,
 			top:         v2,
-			length:      v2X - v1X + 1,
-			width:       v2Y - v1Y + 1,
-			height:      v2Z - v1Z + 1,
+			height:      v2Z - v1Z,
 			supports:    make(map[*brick]struct{}),
 			supportedBy: make(map[*brick]struct{}),
 		}
@@ -82,22 +74,20 @@ func main() {
 	}
 	lenX = maxX - minX + 1
 	lenY = maxY - minY + 1
+	// to stack the bricks, we need to sort from bottom => top, so we can simulate falling by iterating over the bricks
 	slices.SortFunc(bricks, func(a, b *brick) int {
 		return a.bottom.z - b.bottom.z
 	})
 	CreateStackOnGround()
-	slices.SortFunc(bricks, func(a, b *brick) int {
-		return a.bottom.z - b.bottom.z
-	})
-	debugWriteStack()
 	GetNumHoldingUpOfBricks()
+	GetAns()
 }
 
 // create the stack by making each block 'fall' downwards to be on top of the highest already fallen block intersected with
 func CreateStackOnGround() {
 	for i, b := range bricks {
 		maxZ := 1
-		// loop through the 'fallen' bricks to get the Z of the highst intersecting block
+		// loop through the 'fallen' bricks to get the Z of the highest intersecting block
 		for _, u := range bricks[:i] {
 			if DoBricksIntersect(b, u) {
 				maxZ = max(maxZ, u.top.z+1)
@@ -119,12 +109,12 @@ func GetNumHoldingUpOfBricks() {
 		}
 	}
 
+}
+
+func GetAns() {
 	ans := 0
 	for _, lower := range bricks {
 		disintegrate := true
-		if len(lower.supports) == 0 {
-			goto disintegrate
-		}
 		for upper, _ := range lower.supports {
 			_, exists := upper.supportedBy[lower]
 			if exists {
@@ -144,16 +134,4 @@ func GetNumHoldingUpOfBricks() {
 
 func DoBricksIntersect(falling, stationary *brick) bool {
 	return max(falling.bottom.x, stationary.bottom.x) <= min(falling.top.x, stationary.top.x) && max(falling.bottom.y, stationary.bottom.y) <= min(falling.top.y, stationary.top.y)
-}
-
-func debugWriteStack() {
-	var s string
-	for _, b := range bricks {
-		var add string
-		add = string(b.bottom.x) + "," + string(b.bottom.y) + "," + string(b.bottom.z) + "-" + string(b.top.x) + "," + string(b.top.y) + "," + string(b.top.z) + "\n"
-		// s += string(b)
-		s += add
-		// fmt.Printf("s: %v\n", s)
-	}
-	os.WriteFile("../testgo.txt", []byte(s), os.ModeAppend.Perm())
 }
