@@ -69,102 +69,91 @@ func main() {
 			z: v2Z,
 		}
 		brick := brick{
-			ID:                rune('A' + i),
-			bottom:            v1,
-			top:               v2,
-			length:            v2X - v1X + 1,
-			width:             v2Y - v1Y + 1,
-			height:            v2Z - v1Z + 1,
-			supports: make(map[*brick]struct{}),
+			ID:          rune('A' + i),
+			bottom:      v1,
+			top:         v2,
+			length:      v2X - v1X + 1,
+			width:       v2Y - v1Y + 1,
+			height:      v2Z - v1Z + 1,
+			supports:    make(map[*brick]struct{}),
 			supportedBy: make(map[*brick]struct{}),
 		}
-		brick.PrintBrick()
 		bricks = append(bricks, &brick)
 	}
 	lenX = maxX - minX + 1
 	lenY = maxY - minY + 1
-	// fmt.Println(maxX, minX, lenX)
-	// fmt.Println(maxY, minY, lenY)
 	slices.SortFunc(bricks, func(a, b *brick) int {
 		return a.bottom.z - b.bottom.z
 	})
 	CreateStackOnGround()
+	slices.SortFunc(bricks, func(a, b *brick) int {
+		return a.bottom.z - b.bottom.z
+	})
+	debugWriteStack()
 	GetNumHoldingUpOfBricks()
-	GetNumberOfBricksThatCanBeDisintegrated()
 }
 
-func (b *brick) PrintBrick() {
-	// fmt.Printf("\nStart = x: %d, y: %d, z: %d, Area: %d x %d | ", b.start.x, b.start.y, b.start.z, b.start.length, b.start.width)
-	// fmt.Printf("End = x: %d, y: %d, z: %d, Area: %d x %d", b.end.x, b.end.y, b.end.z, b.end.length, b.end.width)
-}
-
+// create the stack by making each block 'fall' downwards to be on top of the highest already fallen block intersected with
 func CreateStackOnGround() {
 	for i, b := range bricks {
-		maxZ := 0
-		if i == 0 {
-			continue
-		}
+		maxZ := 1
+		// loop through the 'fallen' bricks to get the Z of the highst intersecting block
 		for _, u := range bricks[:i] {
 			if DoBricksIntersect(b, u) {
-				if maxZ < u.top.z + 1 {
-					maxZ = u.top.z + 1
-				}
+				maxZ = max(maxZ, u.top.z+1)
 			}
 		}
 		b.bottom.z = maxZ
-		b.top.z = maxZ + b.height - 1
+		b.top.z = maxZ + b.height
 	}
 }
 
 func GetNumHoldingUpOfBricks() {
-	for j, upper := range bricks {
-		for _, lower := range bricks[:j] {
-			if !DoBricksIntersect(lower, upper) || upper.bottom.z != lower.top.z + 1 {
-				continue
+	for i, upper := range bricks {
+		for _, lower := range bricks[:i] {
+			// is upper 'on' lower
+			if DoBricksIntersect(lower, upper) && upper.bottom.z == lower.top.z+1 {
+				lower.supports[upper] = struct{}{}
+				upper.supportedBy[lower] = struct{}{}
 			}
-			lower.supports[upper] = struct{}{}
-			upper.supportedBy[lower] = struct{}{}
 		}
 	}
-	for _, b := range bricks {
-		fmt.Println(b.supports, b.supportedBy)
-	}
+
 	ans := 0
-	for i := 0; i < len(bricks); i++ {
-		if len(bricks[i].supports) == 0 {
-			fmt.Println("Nothing on top of", bricks[i])
-			ans++
-			continue
+	for _, lower := range bricks {
+		disintegrate := true
+		if len(lower.supports) == 0 {
+			goto disintegrate
 		}
-		if i == 0 {
-			continue
-		}
-		count := 0
-		for _, lower := range bricks {
-			for k, _ := range bricks[i].supportedBy {
-				_, exists := lower.supports[k]
-				if exists {
-					count++
+		for upper, _ := range lower.supports {
+			_, exists := upper.supportedBy[lower]
+			if exists {
+				if len(upper.supportedBy) == 1 {
+					disintegrate = false
+					goto disintegrate
 				}
 			}
 		}
-		if count > 0 {
-			fmt.Println(string(bricks[i].ID), "can be disintegrated safely")
+	disintegrate:
+		if disintegrate {
 			ans++
 		}
 	}
 	fmt.Println(ans)
 }
+
 func DoBricksIntersect(falling, stationary *brick) bool {
-	//TODO:implement
 	return max(falling.bottom.x, stationary.bottom.x) <= min(falling.top.x, stationary.top.x) && max(falling.bottom.y, stationary.bottom.y) <= min(falling.top.y, stationary.top.y)
 }
 
-func GetNumberOfBricksThatCanBeDisintegrated() {
-
-}
-
-func (b *brick) CanDisintegrate() bool {
-	//TODO: implement
-	return false
+func debugWriteStack() {
+	var s string
+	for _, b := range bricks {
+		var add string
+		add = string(b.bottom.x) + "," + string(b.bottom.y) + "," + string(b.bottom.z) + "-" + string(b.top.x) + "," + string(b.top.y) + "," + string(b.top.z) + "\n"
+		// s += string(b)
+		s += add
+		// fmt.Printf("s: %v\n", s)
+	}
+	os.WriteFile("../testgo.txt", []byte(s), os.ModeAppend.Perm())
 }
