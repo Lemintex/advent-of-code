@@ -6,13 +6,18 @@ import (
 	"strings"
 )
 
-type node struct {
+type pos struct {
 	x, y int
 }
+type node struct {
+	pos  pos
+	seen int
+}
 
-var intersections map[node]struct{}
+var intersections map[pos]struct{}
 var sx, sy, ex, ey int
 var trail []string
+var graph map[node]struct{}
 
 func main() {
 	f, err := os.ReadFile("../input.txt")
@@ -23,7 +28,7 @@ func main() {
 	sy = 0
 	ey = len(trail) - 1
 	for i, t := range trail {
-		if i == 0 {
+		if i == 0 || i == len(trail)-1{
 			sx = strings.Index(t, ".")
 		} else if i == len(trail)-1 {
 			ex = strings.Index(t, ".")
@@ -34,7 +39,7 @@ func main() {
 }
 
 func parseMapIntoGraph() {
-	intersections = make(map[node]struct{})
+	intersections = make(map[pos]struct{})
 	for y, t := range trail {
 		if y == len(trail)-1 {
 			break
@@ -62,58 +67,40 @@ func parseMapIntoGraph() {
 			if x < len(t)-1 && trail[y][x+1] != '#' {
 				neighbours++
 			}
+
 			if neighbours >= 3 {
-				n := node{
+				pos := pos{
 					x: x,
 					y: y,
 				}
-				intersections[n] = struct{}{}
+				intersections[pos] = struct{}{}
 			}
 		}
 	}
-	fmt.Println(intersections)
 }
 
 func floodfill() {
-	visited := make(map[[2]int]struct{})
-	position := [2]int{sx, sy}
-	var stack [][2]int
-	for {
-		visited[position] = struct{}{}
-		x, y := position[0], position[1]
-		c := trail[y][x]
-		if c == '#' {
-			continue
-		}
-		// top
-		if y > 0 && trail[y-1][x] != '#' && trail[y-1][x] != 'V' {
-
-		}
-		// bottom
-		if y < len(trail)-2 && trail[y+1][x] != '#' && trail[y+1][x] != '^' {
-		}
-
-		// left
-		if x > 0 && trail[y][x-1] != '#' && trail[y][x-1] != '>' {
-		}
-
-		// right
-		if x < len(trail[0])-1 && trail[y][x+1] != '#' && trail[y][x+1] != '<' {
-
-		}
+	dirs := make(map[byte][]pos)
+	dirs['>'] = []pos{pos {x: 1, y: 0}}
+	dirs['<'] = []pos{pos {x: -1, y: 0}}
+	dirs['v'] = []pos{pos {x: 0, y: 1}}
+	dirs['^'] = []pos{pos {x: 0, y: -1}}
+	dirs['.'] = []pos {
+		pos {x: 1, y: 0},
+		pos {x: -1, y: 0},
+		pos {x: 0, y: 1},
+		pos {x: 0, y: -1},
 	}
-}
-
-func flood(x, y int, visited map[[2]int]struct{}) int {
-	steps := 0
-	for {
-		n := node{
-			x: x,
-			y: y,
+	for intersection, _ := range intersections {
+		var stack []node
+		seen := make(map[pos]struct{})
+		for len(stack) > 0 {
+			node := stack[len(stack)-1]
+			stack = stack[:len(stack)-2]
+			_, exists := intersections[node.pos]
+			if node.seen > 0 && exists {
+				
+			}
 		}
-		if _, exists := intersections[n]; exists {
-			return steps
-		}
-
 	}
 }
