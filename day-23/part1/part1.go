@@ -17,7 +17,7 @@ type node struct {
 var intersections map[pos]struct{}
 var sx, sy, ex, ey int
 var trail []string
-var graph map[node]struct{}
+var graph map[pos]map[pos]int
 
 func main() {
 	f, err := os.ReadFile("../input.txt")
@@ -77,9 +77,11 @@ func parseMapIntoGraph() {
 			}
 		}
 	}
+	floodfill()
 }
 
 func floodfill() {
+	graph = make(map[pos]map[pos]int)
 	dirs := make(map[byte][]pos)
 	dirs['>'] = []pos{pos {x: 1, y: 0}}
 	dirs['<'] = []pos{pos {x: -1, y: 0}}
@@ -93,14 +95,42 @@ func floodfill() {
 	}
 	for intersection, _ := range intersections {
 		var stack []node
+		beginning := node {
+			pos: intersection,
+			seen: 0,
+		}
+		stack = append(stack, beginning)
 		seen := make(map[pos]struct{})
+		seen[intersection] = struct{}{}
 		for len(stack) > 0 {
-			node := stack[len(stack)-1]
-			stack = stack[:len(stack)-2]
-			_, exists := intersections[node.pos]
-			if node.seen > 0 && exists {
-				
+			n := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			_, ok := graph[intersection]
+			if !ok {
+				graph[intersection] = make(map[pos]int)
+			}
+			_, exists := intersections[n.pos]
+			if n.seen > 0 && exists {
+				graph[intersection][n.pos] = n.seen
+				continue
+			}
+
+			for _, position := range dirs {
+				for _, dir := range position {
+					nx, ny := n.pos.x + dir.x, n.pos.y + dir.y
+					n.pos.x, n.pos.y = nx, ny
+					_, visited := seen[n.pos]
+					fmt.Println(nx >= 0 && nx > len(trail), ny >= 0 && ny < len(trail[0]), trail[ny][nx] != '#', !visited )
+					if nx >= 0 && nx < len(trail[0]) && ny >= 0 && ny < len(trail) && trail[ny][nx] != '#' && !visited {
+						n.seen++
+						n.pos.x = nx
+						n.pos.y = ny
+						stack = append(stack, n)
+						seen[n.pos] = struct{}{}
+					}
+				}
 			}
 		}
 	}
+	fmt.Println(graph)
 }
