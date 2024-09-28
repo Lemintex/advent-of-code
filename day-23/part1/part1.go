@@ -28,7 +28,7 @@ func main() {
 	sy = 0
 	ey = len(trail) - 1
 	for i, t := range trail {
-		if i == 0 || i == len(trail)-1{
+		if i == 0 || i == len(trail)-1 {
 			sx = strings.Index(t, ".")
 		} else if i == len(trail)-1 {
 			ex = strings.Index(t, ".")
@@ -83,28 +83,38 @@ func parseMapIntoGraph() {
 func floodfill() {
 	graph = make(map[pos]map[pos]int)
 	dirs := make(map[byte][]pos)
-	dirs['>'] = []pos{pos {x: 1, y: 0}}
-	dirs['<'] = []pos{pos {x: -1, y: 0}}
-	dirs['v'] = []pos{pos {x: 0, y: 1}}
-	dirs['^'] = []pos{pos {x: 0, y: -1}}
-	dirs['.'] = []pos {
-		pos {x: 1, y: 0},
-		pos {x: -1, y: 0},
-		pos {x: 0, y: 1},
-		pos {x: 0, y: -1},
+	dirs['>'] = []pos{pos{x: 1, y: 0}}
+	dirs['<'] = []pos{pos{x: -1, y: 0}}
+	dirs['v'] = []pos{pos{x: 0, y: 1}}
+	dirs['^'] = []pos{pos{x: 0, y: -1}}
+	dirs['.'] = []pos{
+		pos{x: 1, y: 0},
+		pos{x: -1, y: 0},
+		pos{x: 0, y: 1},
+		pos{x: 0, y: -1},
 	}
+	// for each intersection
 	for intersection, _ := range intersections {
 		var stack []node
-		beginning := node {
-			pos: intersection,
+		beginning := node{
+			pos:  intersection,
 			seen: 0,
 		}
+		// stack init
 		stack = append(stack, beginning)
+
+		// seen init
 		seen := make(map[pos]struct{})
 		seen[intersection] = struct{}{}
+		fmt.Println(intersection)
+
+		// while the stack isn't empty
 		for len(stack) > 0 {
+			// pop
 			n := stack[len(stack)-1]
+			fmt.Println("visiting", n)
 			stack = stack[:len(stack)-1]
+
 			_, ok := graph[intersection]
 			if !ok {
 				graph[intersection] = make(map[pos]int)
@@ -115,19 +125,17 @@ func floodfill() {
 				continue
 			}
 
-			for _, position := range dirs {
-				for _, dir := range position {
-					nx, ny := n.pos.x + dir.x, n.pos.y + dir.y
-					n.pos.x, n.pos.y = nx, ny
-					_, visited := seen[n.pos]
-					fmt.Println(nx >= 0 && nx > len(trail), ny >= 0 && ny < len(trail[0]), trail[ny][nx] != '#', !visited )
-					if nx >= 0 && nx < len(trail[0]) && ny >= 0 && ny < len(trail) && trail[ny][nx] != '#' && !visited {
-						n.seen++
-						n.pos.x = nx
-						n.pos.y = ny
-						stack = append(stack, n)
-						seen[n.pos] = struct{}{}
-					}
+			for _, position := range dirs[trail[n.pos.x][n.pos.y]] {
+				nx, ny := n.pos.x+position.x, n.pos.y+position.y
+				_, visited := seen[n.pos]
+				// fmt.Println(nx >= 0 && nx > len(trail), ny >= 0 && ny < len(trail[0]), trail[ny][nx] != '#', !visited )
+				if nx >= 0 && nx < len(trail[0]) && ny >= 0 && ny < len(trail) && trail[ny][nx] != '#' && !visited {
+					n.seen++
+					n.pos.x = nx
+					n.pos.y = ny
+					stack = append(stack, n)
+					seen[n.pos] = struct{}{}
+					fmt.Println("add to seen", n.pos)
 				}
 			}
 		}
