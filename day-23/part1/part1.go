@@ -7,7 +7,7 @@ import (
 )
 
 type pos struct {
-	x, y int
+	r, c int
 }
 type node struct {
 	pos  pos
@@ -15,7 +15,7 @@ type node struct {
 }
 
 var intersections map[pos]struct{}
-var sx, sy, ex, ey int
+var sr, sc, er, ec int
 var trail []string
 var graph map[pos]map[pos]int
 
@@ -25,53 +25,57 @@ func main() {
 		panic("AAH")
 	}
 	trail = strings.Split(string(f), "\n")
-	sy = 0
-	ey = len(trail) - 1
+	sr = 0
+	er = len(trail) - 2
 	for i, t := range trail {
-		if i == 0 || i == len(trail)-1 {
-			sx = strings.Index(t, ".")
-		} else if i == len(trail)-1 {
-			ex = strings.Index(t, ".")
+		if i == 0 {
+			sc = strings.Index(t, ".")
+		} else if i == len(trail)-2 /*TODO FIX*/ {
+			fmt.Println(t)
+			ec = strings.Index(t, ".")
 		}
 	}
-	fmt.Println(sx, sy, ex, ey)
+	fmt.Println(sr, sc, er, ec)
 	parseMapIntoGraph()
 }
 
 func parseMapIntoGraph() {
 	intersections = make(map[pos]struct{})
-	for y, t := range trail {
-		if y == len(trail)-1 {
-			break
-		}
-		for x, c := range t {
+	// add start and end to intersections
+	start := pos{r: sr, c: sc}
+	end := pos{r: er, c: ec}
+	intersections[start] = struct{}{}
+
+	intersections[end] = struct{}{}
+	for r, t := range trail {
+		for c, ch := range t {
 			neighbours := 0
-			if c == '#' {
+			if ch == '#' {
 				continue
 			}
 			// top
-			if y > 0 && trail[y-1][x] != '#' {
+			if c > 0 && trail[r][c-1] != '#' {
 				neighbours++
 			}
 			// bottom
-			if y < len(trail)-2 && trail[y+1][x] != '#' {
+			if c < len(trail)-2 && trail[r][c+1] != '#' {
 				neighbours++
 			}
 
 			// left
-			if x > 0 && trail[y][x-1] != '#' {
+			if r > 0 && trail[r-1][c] != '#' {
 				neighbours++
 			}
 
 			// right
-			if x < len(t)-1 && trail[y][x+1] != '#' {
+			if r < len(t)-1 && trail[r+1][c] != '#' {
 				neighbours++
 			}
 
 			if neighbours >= 3 {
 				pos := pos{
-					x: x,
-					y: y,
+					r: r,
+					c: c,
 				}
 				intersections[pos] = struct{}{}
 			}
@@ -83,15 +87,15 @@ func parseMapIntoGraph() {
 func floodfill() {
 	graph = make(map[pos]map[pos]int)
 	dirs := make(map[byte][]pos)
-	dirs['>'] = []pos{pos{x: 1, y: 0}}
-	dirs['<'] = []pos{pos{x: -1, y: 0}}
-	dirs['v'] = []pos{pos{x: 0, y: 1}}
-	dirs['^'] = []pos{pos{x: 0, y: -1}}
+	dirs['>'] = []pos{pos{c: 1, r: 0}}
+	dirs['<'] = []pos{pos{c: -1, r: 0}}
+	dirs['v'] = []pos{pos{c: 0, r: 1}}
+	dirs['^'] = []pos{pos{c: 0, r: -1}}
 	dirs['.'] = []pos{
-		pos{x: 1, y: 0},
-		pos{x: -1, y: 0},
-		pos{x: 0, y: 1},
-		pos{x: 0, y: -1},
+		pos{c: 1, r: 0},
+		pos{c: -1, r: 0},
+		pos{c: 0, r: 1},
+		pos{c: 0, r: -1},
 	}
 	// for each intersection
 	for intersection, _ := range intersections {
@@ -106,39 +110,52 @@ func floodfill() {
 		// seen init
 		seen := make(map[pos]struct{})
 		seen[intersection] = struct{}{}
-		fmt.Println(intersection)
+		// fmt.Println("Starting from intersection", intersection)
 
 		// while the stack isn't empty
 		for len(stack) > 0 {
 			// pop
 			n := stack[len(stack)-1]
-			fmt.Println("visiting", n)
 			stack = stack[:len(stack)-1]
 
 			_, ok := graph[intersection]
 			if !ok {
 				graph[intersection] = make(map[pos]int)
 			}
+			// if a different intersection is reached
 			_, exists := intersections[n.pos]
-			if n.seen > 0 && exists {
+			if n.seen > 0 && exists && intersection != n.pos {
+				// fmt.Println("int", n, intersection)
 				graph[intersection][n.pos] = n.seen
 				continue
 			}
 
-			for _, position := range dirs[trail[n.pos.x][n.pos.y]] {
-				nx, ny := n.pos.x+position.x, n.pos.y+position.y
-				_, visited := seen[n.pos]
-				// fmt.Println(nx >= 0 && nx > len(trail), ny >= 0 && ny < len(trail[0]), trail[ny][nx] != '#', !visited )
-				if nx >= 0 && nx < len(trail[0]) && ny >= 0 && ny < len(trail) && trail[ny][nx] != '#' && !visited {
-					n.seen++
-					n.pos.x = nx
-					n.pos.y = ny
-					stack = append(stack, n)
-					seen[n.pos] = struct{}{}
-					fmt.Println("add to seen", n.pos)
+			// go through neighbours
+			xIndex, yIndex := min(n.pos.c, len(trail[0])-1), min(n.pos.r, len(trail)-2)
+			// fmt.Println("Go Through Neighbours", dirs[trail[yIndex][xIndex]])
+			for _, position := range dirs[trail[yIndex][xIndex]] {
+				nc, nr := n.pos.c+position.c, n.pos.r+position.r
+				// fmt.Println("n pis:", n.pos, "pos:", position, "nr:", nr, "nc:", nc)
+				// clamp the indexes so we dont go out of bounds
+				nc = max(0, min(nc, len(trail[0])))
+				nr = max(0, min(nr, len(trail)-2))
+
+				pos := pos{
+					r: nr,
+					c: nc,
+				}
+				_, visited := seen[pos]
+				// fmt.Println(nc >= 0 && nc < len(trail[0]), nr >= 0 && nr < len(trail) - 1, trail[nr][nc] != '#', visited, "Seen:", pos)
+				if nc >= 0 && nc < len(trail[0]) && nr >= 0 && nr < len(trail)-1 && trail[nr][nc] != '#' && !visited {
+					stack = append(stack, node{pos: pos, seen: n.seen + 1})
+					seen[pos] = struct{}{}
 				}
 			}
 		}
 	}
+	for k, v := range graph {
+		fmt.Printf("\n%v: %v", k, v)
+	}
+	fmt.Println("")
 	fmt.Println(graph)
 }
