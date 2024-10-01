@@ -18,6 +18,7 @@ var intersections map[pos]struct{}
 var sr, sc, er, ec int
 var trail []string
 var graph map[pos]map[pos]int
+var walkSeen map[pos]struct{}
 
 func main() {
 	f, err := os.ReadFile("../input.txt")
@@ -82,6 +83,9 @@ func parseMapIntoGraph() {
 		}
 	}
 	floodfill()
+	walkSeen = map[pos]struct{}{}
+	startingPos := pos{r: sr, c: sc}
+	fmt.Println(findLongestHike(startingPos))
 }
 
 func floodfill() {
@@ -110,7 +114,6 @@ func floodfill() {
 		// seen init
 		seen := make(map[pos]struct{})
 		seen[intersection] = struct{}{}
-		// fmt.Println("Starting from intersection", intersection)
 
 		// while the stack isn't empty
 		for len(stack) > 0 {
@@ -125,17 +128,14 @@ func floodfill() {
 			// if a different intersection is reached
 			_, exists := intersections[n.pos]
 			if n.seen > 0 && exists && intersection != n.pos {
-				// fmt.Println("int", n, intersection)
 				graph[intersection][n.pos] = n.seen
 				continue
 			}
 
 			// go through neighbours
 			xIndex, yIndex := min(n.pos.c, len(trail[0])-1), min(n.pos.r, len(trail)-2)
-			// fmt.Println("Go Through Neighbours", dirs[trail[yIndex][xIndex]])
 			for _, position := range dirs[trail[yIndex][xIndex]] {
 				nc, nr := n.pos.c+position.c, n.pos.r+position.r
-				// fmt.Println("n pis:", n.pos, "pos:", position, "nr:", nr, "nc:", nc)
 				// clamp the indexes so we dont go out of bounds
 				nc = max(0, min(nc, len(trail[0])))
 				nr = max(0, min(nr, len(trail)-2))
@@ -145,7 +145,6 @@ func floodfill() {
 					c: nc,
 				}
 				_, visited := seen[pos]
-				// fmt.Println(nc >= 0 && nc < len(trail[0]), nr >= 0 && nr < len(trail) - 1, trail[nr][nc] != '#', visited, "Seen:", pos)
 				if nc >= 0 && nc < len(trail[0]) && nr >= 0 && nr < len(trail)-1 && trail[nr][nc] != '#' && !visited {
 					stack = append(stack, node{pos: pos, seen: n.seen + 1})
 					seen[pos] = struct{}{}
@@ -153,9 +152,21 @@ func floodfill() {
 			}
 		}
 	}
-	for k, v := range graph {
-		fmt.Printf("\n%v: %v", k, v)
+}
+
+func findLongestHike(position pos) int {
+	if position.c == ec && position.r == er {
+		return 0
 	}
-	fmt.Println("")
-	fmt.Println(graph)
+	m := -99999999
+	walkSeen[position] = struct{}{}
+	for n, _ := range graph[position] {
+		_, exists := walkSeen[n]
+		if exists {
+			continue
+		}
+		m = max(m, findLongestHike(n) + graph[position][n])
+	}
+	delete(walkSeen, position)
+	return m
 }
