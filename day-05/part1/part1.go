@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
-	"slices"
 )
 
 type mapRange struct {
@@ -21,14 +21,18 @@ func main() {
 	if err != nil {
 		panic("File not found")
 	}
+	ParseInput(f)
+	SortMaps()
+	HandleSeeds()
+}
+
+func ParseInput(f []byte) {
 	segments := strings.Split(string(f), "\n\n")
-	fmt.Println(len(segments))
 
 	var s []string
 	for _, l := range segments {
 		_, v, _ := strings.Cut(strings.TrimSpace(l), ":")
 		s = append(s, strings.TrimSpace(v))
-		fmt.Println("v:", v)
 	}
 	seedList := strings.TrimSpace(s[0])
 	list := strings.Split(seedList, " ")
@@ -36,22 +40,17 @@ func main() {
 		seed, _ := strconv.Atoi(s)
 		seeds = append(seeds, seed)
 	}
-	fmt.Println("Seeds", seedList)
 	mapIndex := -1
 	for _, m := range s {
+		// skips the seed list
 		if mapIndex == -1 {
 			mapIndex = 0
 			continue
 		}
 		maps = append(maps, []mapRange{})
 		lines := strings.Split(strings.TrimSpace(m), "\n")
-		fmt.Println(s)
-		// fmt.Println("map")
 		for _, l := range lines {
-			fmt.Println("l", l)
 			numbers := strings.Split(l, " ")
-			fmt.Println(len(numbers), numbers)
-			fmt.Println(numbers[0], " | ", numbers[1], " | ", numbers[2])
 			dest, _ := strconv.Atoi(numbers[0])
 			src, _ := strconv.Atoi(numbers[1])
 			r, _ := strconv.Atoi(numbers[2])
@@ -60,23 +59,10 @@ func main() {
 				dest:        dest,
 				rangelength: r,
 			}
-			fmt.Println("Adding", len(maps), mapIndex)
 			maps[mapIndex] = append(maps[mapIndex], mapRange)
 		}
-			mapIndex++
+		mapIndex++
 	}
-	SortMaps()
-	fmt.Println(maps)
-	fmt.Println("Seeds:", seedList)
-	fmt.Println("seed map", maps[0])
-	fmt.Println("soil map", maps[1])
-	fmt.Println("fertilizer map", maps[2])
-	fmt.Println("water map", maps[3])
-	fmt.Println("light map", maps[4])
-	fmt.Println("temperature map", maps[5])
-	fmt.Println("humidity map", maps[6])
-
-	HandleSeeds()
 }
 
 func SortMaps() {
@@ -88,7 +74,18 @@ func SortMaps() {
 }
 
 func HandleSeeds() {
+	ans := 99999999999
 	for _, s := range seeds {
-		fmt.Println(s)
+		for i := 0; i < len(maps); i++ {
+			currentMap := maps[i]
+			for mapIndex := range currentMap {
+				if currentMap[mapIndex].src <= s && currentMap[mapIndex].src+currentMap[mapIndex].rangelength > s {
+					s = currentMap[mapIndex].dest + (s - currentMap[mapIndex].src)
+					break
+				}
+			}
+		}
+		ans = min(ans, s)
 	}
+	fmt.Println("Ans:", ans)
 }
