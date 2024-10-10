@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+type seedGroup struct {
+	start, size int
+}
+
 type mapRange struct {
 	dest, src, rangelength int
 }
