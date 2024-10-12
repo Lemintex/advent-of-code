@@ -9,7 +9,7 @@ import (
 )
 
 type seedGroup struct {
-	start, size int
+	start, end int
 }
 
 type mapRange struct {
@@ -18,7 +18,7 @@ type mapRange struct {
 
 var maps [][]mapRange
 
-var seeds []int
+var seedGroups []seedGroup
 
 func main() {
 	f, err := os.ReadFile("../input.txt")
@@ -40,9 +40,19 @@ func ParseInput(f []byte) {
 	}
 	seedList := strings.TrimSpace(s[0])
 	list := strings.Split(seedList, " ")
-	for _, s := range list {
-		seed, _ := strconv.Atoi(s)
-		seeds = append(seeds, seed)
+	pairs := [][2]int{}
+	for i := 0; i < len(list); i += 2 {
+		start, _ := strconv.Atoi(list[i])
+		end, _ := strconv.Atoi(list[i+1])
+		end += start
+		pairs = append(pairs, [2]int{start, end})
+	}
+	for _, s := range pairs {
+		seeds := seedGroup{
+			start: s[0],
+			end:   s[1],
+		}
+		seedGroups = append(seedGroups, seeds)
 	}
 	mapIndex := -1
 	for _, m := range s {
@@ -78,18 +88,37 @@ func SortMaps() {
 }
 
 func HandleSeeds() {
-	ans := 99999999999
-	for _, s := range seeds {
-		for i := 0; i < len(maps); i++ {
-			currentMap := maps[i]
-			for mapIndex := range currentMap {
-				if currentMap[mapIndex].src <= s && currentMap[mapIndex].src+currentMap[mapIndex].rangelength > s {
-					s = currentMap[mapIndex].dest + (s - currentMap[mapIndex].src)
+	ans := 999999999999
+	for _, m := range maps {
+		var n []seedGroup
+		for len(seedGroups) > 0 {
+			// pop
+			front := seedGroups[0]
+			seedGroups = seedGroups[1:]
+			found := false
+			for _, ranges := range m {
+				os, oe := max(front.start, ranges.src), min(front.end, ranges.src+ranges.rangelength)
+				if os < oe {
+					found = true
+					n = append(n, seedGroup{os - ranges.src + ranges.dest, oe - ranges.src + ranges.dest})
+					if os > front.start {
+						seedGroups = append(seedGroups, seedGroup{front.start, os})
+					}
+					if front.end > oe {
+
+						seedGroups = append(seedGroups, seedGroup{oe, front.end})
+					}
 					break
 				}
 			}
+			if !found {
+				n = append(n, seedGroup{front.start, front.end})
+			}
 		}
-		ans = min(ans, s)
+		seedGroups = n
+	}
+	for _, s := range seedGroups {
+		ans = min(ans, s.start)
 	}
 	fmt.Println("Ans:", ans)
 }
