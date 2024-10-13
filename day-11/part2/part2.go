@@ -63,7 +63,7 @@ func ParseInput(str []string) {
 
 func Calculate() {
 	ans := 0
-	expansion := 2
+	expansion := 1000000
 	for i, g := range galaxies {
 		for _, pair := range galaxies[:i] {
 			for r := min(g.row, pair.row); r < max(g.row, pair.row); r++ {
