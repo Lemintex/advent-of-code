@@ -20,7 +20,8 @@ typedef struct module_targets {
 } module_targets_t;
 
 typedef struct module_cycle {
-  int cycle_len; // first pass - set to presses ||| second pass - set to presses - cycle_len
+  int cycle_len; // first pass - set to presses ||| second pass - set to presses
+                 // - cycle_len
   int seen_count;
 } module_cycle_t;
 
@@ -174,11 +175,12 @@ int main() {
   do_button_presses();
 }
 
-// assuming that for all module states, there is a fixes number of button presses to reach that state again
+// assuming that for all module states, there is a fixes number of button
+// presses to reach that state again
 void do_button_presses() {
-  module_t* rx = is_in_module_str("rx");
-  module_t* input = is_in_module_str(rx->input.input_name[0]);
-  module_t* in_modules[input->input.input_count];
+  module_t *rx = is_in_module_str("rx");
+  module_t *input = is_in_module_str(rx->input.input_name[0]);
+  module_t *in_modules[input->input.input_count];
   for (int i = 0; i < input->input.input_count; i++) {
     in_modules[i] = is_in_module_str(input->input.input_name[i]);
   }
@@ -191,12 +193,12 @@ void do_button_presses() {
       for (int c = 0; c < 4; c++) {
         total *= in_modules[c]->cycle.cycle_len;
       }
-      printf("\nTotal: %ld", total);
+      printf("\n_total: %ld", total);
     }
   }
 }
 
-void button_press(module_t* in_modules[], int* indexes, int len) {
+void button_press(module_t *in_modules[], int *indexes, int len) {
   static int presses = 0;
   presses++;
   for (int n = 0; n < modules[broadcast_index].target.target_count; n++) {
@@ -216,8 +218,7 @@ void button_press(module_t* in_modules[], int* indexes, int len) {
     if (origin->cycle.seen_count < 2 && pulse == HIGH) {
       if (origin->cycle.seen_count == 0) {
         origin->cycle.cycle_len = presses;
-      }
-      else {
+      } else {
         origin->cycle.cycle_len = presses - origin->cycle.cycle_len;
       }
       origin->cycle.seen_count++;
@@ -289,8 +290,10 @@ module_t *is_in_module_str(char *str) {
 
 int are_all_cycles_finished() {
   for (int i = 0; i < module_count; i++) {
-    if (modules[i].cycle.seen_count < 2 && (strcmp(modules[i].name, "rx") != 0 && strcmp(modules[i].name, "broadcaster") != 0)) {
-      printf("\nModule %s not cycled", modules[i].name);
+    if (modules[i].cycle.seen_count < 2 &&
+        (strcmp(modules[i].name, "rx") != 0 &&
+         strcmp(modules[i].name, "broadcaster") != 0)) {
+      printf("\n_module %s not cycled", modules[i].name);
       return 0;
     }
   }

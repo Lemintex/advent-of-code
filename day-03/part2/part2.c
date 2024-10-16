@@ -88,7 +88,7 @@ void calculate_gear_ratio() {
 void check_map() {
   for (int y = 0; y < MAP_SIZE; y++) {
     char *pos = map[y];
-    char *lastPos = map[y + 1];
+    char *last_pos = map[y + 1];
     while (true) {
       char *first_digit = strpbrk(pos, "0123456789");
       if (first_digit >= map[y + 1] || first_digit == NULL) {
@@ -115,15 +115,15 @@ void check_map() {
       int x = first_digit - map[y];
       bool is_touching = false;
 
-      for (int posX = x; posX < x + length; posX++) {
-        is_touching = is_touching_gear(posX, y);
+      for (int pos_x = x; pos_x < x + length; pos_x++) {
+        is_touching = is_touching_gear(pos_x, y);
         if (is_touching) {
           check_existing_gear_info(n);
         }
         if (is_touching)
           break;
       }
-      if (last_digit >= lastPos - 1) {
+      if (last_digit >= last_pos - 1) {
         break;
       }
     }

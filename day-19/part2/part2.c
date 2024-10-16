@@ -7,7 +7,7 @@ typedef struct rule {
   char type;                // x, m, a, s
   char comparator;          // <, >
   int value;                // the value to compare against
-  char *targetWorkflowName; // the name of the workflow to go to next
+  char *target_workflow_name; // the name of the workflow to go to next
 } rule_t;
 
 typedef struct workflow {
@@ -70,10 +70,10 @@ int main() {
         continue;
       }
       // copy the workflow line
-      char *lineCopy = strdup(line);
+      char *line_copy = strdup(line);
 
       // get the workflow name
-      char *workflow_name = strtok(lineCopy, "{");
+      char *workflow_name = strtok(line_copy, "{");
 
       // get the number of rules in the workflow
       // we use the original line as it is not modified
@@ -103,7 +103,7 @@ int main() {
 
         // get the target workflow
         char *str = strtok(NULL, ",");
-        workflow.rules[i].targetWorkflowName =
+        workflow.rules[i].target_workflow_name =
             strdup(str); // strdup mallocs memory
       }
       workflow.rule_count = rule_count;
@@ -214,7 +214,7 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
     bool failed_all = false;
     if (rule.type == 'x') {
       if (T.x.min <= T.x.max) {
-        count += count_accepted_parts(T, rule.targetWorkflowName);
+        count += count_accepted_parts(T, rule.target_workflow_name);
       }
       if (F.x.min <= F.x.max && !failed_all) {
         group = F;
@@ -223,7 +223,7 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
       }
     } else if (rule.type == 'm') {
       if (T.m.min <= T.m.max) {
-        count += count_accepted_parts(T, rule.targetWorkflowName);
+        count += count_accepted_parts(T, rule.target_workflow_name);
       }
       if (F.m.min <= F.m.max && !failed_all) {
         group = F;
@@ -232,7 +232,7 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
       }
     } else if (rule.type == 'a') {
       if (T.a.min <= T.a.max) {
-        count += count_accepted_parts(T, rule.targetWorkflowName);
+        count += count_accepted_parts(T, rule.target_workflow_name);
       }
       if (F.a.min <= F.a.max && !failed_all) {
         group = F;
@@ -241,7 +241,7 @@ long int count_accepted_parts(part_group_t group, char *workflow__name) {
       }
     } else if (rule.type == 's') {
       if (T.s.min <= T.s.max) {
-        count += count_accepted_parts(T, rule.targetWorkflowName);
+        count += count_accepted_parts(T, rule.target_workflow_name);
       }
       if (F.s.min <= F.s.max && !failed_all) {
         group = F;

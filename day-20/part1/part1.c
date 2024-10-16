@@ -170,7 +170,7 @@ void do_button_presses() {
     low++;
     button_press(&low, &high);
   }
-  printf("\nLow: %d\n", low);
+  printf("\n_low: %d\n", low);
   printf("High: %d\n", high);
   printf("%ld\n", high * low);
 }

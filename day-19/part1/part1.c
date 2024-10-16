@@ -4,10 +4,10 @@
 #include <string.h>
 
 typedef struct rule {
-  char type;                // x, m, a, s
-  char comparator;          // <, >
-  int value;                // the value to compare against
-  char *targetWorkflowName; // the name of the workflow to go to next
+  char type;                  // x, m, a, s
+  char comparator;            // <, >
+  int value;                  // the value to compare against
+  char *target_workflow_name; // the name of the workflow to go to next
 } rule_t;
 
 typedef struct workflow {
@@ -69,10 +69,10 @@ int main() {
         continue;
       }
       // copy the workflow line
-      char *lineCopy = strdup(line);
+      char *line_copy = strdup(line);
 
       // get the workflow name
-      char *workflow_name = strtok(lineCopy, "{");
+      char *workflow_name = strtok(line_copy, "{");
 
       // get the number of rules in the workflow
       // we use the original line as it is not modified
@@ -102,7 +102,7 @@ int main() {
 
         // get the target workflow
         char *str = strtok(NULL, ",");
-        workflow.rules[i].targetWorkflowName =
+        workflow.rules[i].target_workflow_name =
             strdup(str); // strdup mallocs memory
       }
       workflow.rule_count = rule_count;
@@ -159,12 +159,12 @@ int organise_part(part_t *part) {
       }
       if (rule_met) {
         rule_met = false;
-        if (strcmp(rule.targetWorkflowName, "A") == 0) {
+        if (strcmp(rule.target_workflow_name, "A") == 0) {
           return part->part_rating;
-        } else if (strcmp(rule.targetWorkflowName, "R") == 0) {
+        } else if (strcmp(rule.target_workflow_name, "R") == 0) {
           return 0;
         } else {
-          current_workflow = get_workflow(rule.targetWorkflowName);
+          current_workflow = get_workflow(rule.target_workflow_name);
 
           // reset the loop index
           i = -1;

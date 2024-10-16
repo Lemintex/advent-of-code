@@ -53,14 +53,14 @@ int process_line(char *line, number_t *numbers) {
       // check if the current character is the first letter of a number
       for (int j = 0; j < 10; j++) {
         int index = i;
-        for (int wordIndex = 0; line[index] == numbers[j].number[wordIndex];
-             wordIndex++, index++) {
+        for (int word_index = 0; line[index] == numbers[j].number[word_index];
+             word_index++, index++) {
           // EOL protection
           if (line[index] == '\0') {
             return 1;
           }
 
-          if (wordIndex == numbers[j].length - 1) {
+          if (word_index == numbers[j].length - 1) {
             if (found == 0) {
               start = numbers[j].num;
               found = true;

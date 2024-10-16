@@ -1,105 +1,88 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
-int cardNumbers[211][10] = {0};
-int winningNumbers[211][25] = {0};
-int numberOfCards[211] = {0};
+int card_numbers[211][10] = {0};
+int winning_numbers[211][25] = {0};
+int number_of_cards[211] = {0};
 
-void ParseLine(char* line, int cardIndex)
-{
-    int index = 10; // skip the first 10 characters
-    for (int i = 0; i < 10; i++)
-    {
-        char c = line[index];
-        if (line[index] >= '0' && line[index] <= '9')
-        {
-            cardNumbers[cardIndex][i] *= 10;
-            cardNumbers[cardIndex][i] += line[index] - '0';
-        }
-        index++;
-        c = line[index];
-        if (line[index] >= '0' && line[index] <= '9')
-        {
-            cardNumbers[cardIndex][i] *= 10;
-            cardNumbers[cardIndex][i] += line[index] - '0';
-        }
-        
-        
-        index+=2;
-    }
-    index += 2; // skip the "or"
+void parse_line(char *line, int card_index) {
+  int index = 10; // skip the first 10 characters
+  for (int i = 0; i < 10; i++) {
     char c = line[index];
-    for (int i = 0; i < 25; i++)
-    {
-        c = line[index];
-        if (line[index] >= '0' && line[index] <= '9')
-        {
-            winningNumbers[cardIndex][i] *= 10;
-            winningNumbers[cardIndex][i] += line[index] - '0';
-        }
-        index++;
-        c = line[index];
-        if (line[index] >= '0' && line[index] <= '9')
-        {
-            winningNumbers[cardIndex][i] *= 10;
-            winningNumbers[cardIndex][i] += line[index] - '0';
-        }
-        index+=2;
+    if (line[index] >= '0' && line[index] <= '9') {
+      card_numbers[card_index][i] *= 10;
+      card_numbers[card_index][i] += line[index] - '0';
     }
-}
-int ReturnGameTotalThatWin()
-{
-    int total = 0;
-    for (int i = 0; i < 211; i++)
-    {
-        numberOfCards[i] = 1;
+    index++;
+    c = line[index];
+    if (line[index] >= '0' && line[index] <= '9') {
+      card_numbers[card_index][i] *= 10;
+      card_numbers[card_index][i] += line[index] - '0';
     }
-    for (int i = 0; i < 211; i++)
-    {
-        int winningPower = 0;
-        for (int j = 0; j < 10; j++)
-        {
-            for (int k = 0; k < 25; k++)
-            {
-                int n1 = cardNumbers[i][j];
-                int n2 = winningNumbers[i][k];
 
-                if (cardNumbers[i][j] == winningNumbers[i][k])
-                {
-                    winningPower++;
-                    break;
-                }
-            }
-        }
-        // calculate the score
-            int n = numberOfCards[i];
-        for (int c = 1; c <= winningPower; c++)
-        {
-            if (i + c >= 211)
-            {
-                break;
-            }
-            numberOfCards[i + c] += n;
-        }
-        total += n;
+    index += 2;
+  }
+  index += 2; // skip the "or"
+  char c = line[index];
+  for (int i = 0; i < 25; i++) {
+    c = line[index];
+    if (line[index] >= '0' && line[index] <= '9') {
+      winning_numbers[card_index][i] *= 10;
+      winning_numbers[card_index][i] += line[index] - '0';
     }
-    printf("total: %d\n", total);
+    index++;
+    c = line[index];
+    if (line[index] >= '0' && line[index] <= '9') {
+      winning_numbers[card_index][i] *= 10;
+      winning_numbers[card_index][i] += line[index] - '0';
+    }
+    index += 2;
+  }
 }
 
-int main()
-{
-    FILE* input = fopen("../input.txt", "r");
+void return_game_total_that_win() {
+  int total = 0;
+  for (int i = 0; i < 211; i++) {
+    number_of_cards[i] = 1;
+  }
+  for (int i = 0; i < 211; i++) {
+    int winning_power = 0;
+    for (int j = 0; j < 10; j++) {
+      for (int k = 0; k < 25; k++) {
+        int n1 = card_numbers[i][j];
+        int n2 = winning_numbers[i][k];
 
-    // big char array to hold the line
-    char line[256];
-    int i = 0;
-
-    while (fgets(line, sizeof(line), input))
-    {
-        ParseLine(line, i);
-        i++;
-        /* code */
+        if (card_numbers[i][j] == winning_numbers[i][k]) {
+          winning_power++;
+          break;
+        }
+      }
     }
-   ReturnGameTotalThatWin(); 
+    // calculate the score
+    int n = number_of_cards[i];
+    for (int c = 1; c <= winning_power; c++) {
+      if (i + c >= 211) {
+        break;
+      }
+      number_of_cards[i + c] += n;
+    }
+    total += n;
+  }
+  printf("total: %d\n", total);
+}
+
+int main() {
+  FILE *input = fopen("../input.txt", "r");
+
+  // big char array to hold the line
+  char line[256];
+  int i = 0;
+
+  while (fgets(line, sizeof(line), input)) {
+    parse_line(line, i);
+    i++;
+    /* code */
+  }
+  return_game_total_that_win();
 }
