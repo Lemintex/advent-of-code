@@ -8,8 +8,11 @@ fi
 
 for i in {1..25}
 do
-  # Copy contents of day-xx to day-i
-  cp -r day-xx/ "$1/day-$i/"
+  if [ $i -lt 10 ]; then
+    cp -r day-xx/ "$1/day-0$i/"
+  else
+    cp -r day-xx/ "$1/day-$i/"
+  fi
 done
 
 echo "Files copied successfully."
