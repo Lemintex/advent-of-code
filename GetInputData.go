@@ -83,7 +83,7 @@ func CreateFileWithContents(dir string) {
 
 	fmt.Println("Getting input from " + year + " day " + day)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil || resp.StatusCode != 200 {
 		fmt.Println(err)
 		return
 	}
