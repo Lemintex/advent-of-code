@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 var input []string
@@ -37,25 +38,72 @@ func ReadBigBoy() {
 }
 
 func main() {
-	p1, bb1 := Part1()
-	p2, bb2 := Part2()
-	fmt.Println("Part 1:", p1)
+	Read()
+	Parse()
+	aoc1, bb1 := Part1()
+	aoc2, bb2 := Part2()
+	fmt.Println("==============================================")
+	fmt.Println("Part 1:", aoc1)
 	fmt.Println("Big Boy Part 1:", bb1)
-	fmt.Println("Part 2:", p2)
+	fmt.Println("Part 2:", aoc2)
 	fmt.Println("Big Boy Part 2:", bb2)
 }
 
+func Read() {
+	ReadInput()
+	ReadBigBoy()
+}
+
+func Parse() {
+	ParseInput()
+	ParseBigBoy()
+}
 // do all the stuff related to handling the input here
+
 func ParseInput() {
 
 }
 
-func Part1() (int, int) {
-	part1, bigboy := 0, 0
-	return part1, bigboy
+func ParseBigBoy() {
+
 }
 
-func Part2() (int, int) {
-	part2, bigboy := 0, 0
-	return part2, bigboy
+func Part1() (int, int64) {
+	return Part1AOC(), Part1BigBoy()
+}
+
+func Part1AOC() int {
+	start := time.Now()
+	ans := 0
+
+	fmt.Println("AOC Part 1:", time.Since(start))
+	return ans
+}
+
+func Part1BigBoy() int64 {
+	start := time.Now()
+	ans := int64(0)
+
+	fmt.Println("Big Boy Part 1:", time.Since(start))
+	return ans
+}
+
+func Part2() (int, int64) {
+	return Part2AOC(), Part2BigBoy()
+}
+
+func Part2AOC() int {
+	start := time.Now()
+	ans := 0
+
+	fmt.Println("AOC Part 2:", time.Since(start))
+	return ans
+}
+
+func Part2BigBoy() int64 {
+	start := time.Now()
+	ans := int64(0)
+
+	fmt.Println("Big Boy Part 2:", time.Since(start))
+	return ans
 }
