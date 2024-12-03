@@ -11,37 +11,40 @@ import (
 var input []string
 var bigboy []string
 
-// only for getting the input into []string format
-// put input parsing code in ParseInput()
-func ReadInput() {
-	s, err := os.ReadFile("input.txt")
+func ReadFiles() {
+	var err error
+	input, err = Read("input.txt")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	in := strings.TrimSpace(string(s))
 
-	// depending on the grouping of the input we may want to change the seperator
-	input = strings.Split(in, "\n")
+	bigboy, err = Read("bigboy.txt")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 }
 
-func ReadBigBoy() {
-	s, err := os.ReadFile("bigboy.txt")
+func Read(filename string) ([]string, error) {
+	s, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return nil, err
 	}
 	in := strings.TrimSpace(string(s))
 
 	// depending on the grouping of the input we may want to change the seperator
-	bigboy = strings.Split(in, "\n")
+	return strings.Split(in, "\n"), nil
 }
 
 func main() {
-	Read()
-	Parse()
-	aoc1, bb1 := Part1()
-	aoc2, bb2 := Part2()
+	ReadFiles()
+	aocParsed, bigboyParsed := ParseInputs() // use these
+	aoc1, aoc1Time := Part1()
+	bb1, bb1Time  := Part1()
+	aoc2, aoc2Time := Part2()
+	bb2, bb2Time := Part2()
 	fmt.Println("==============================================")
 	fmt.Println("Part 1:", aoc1)
 	fmt.Println("Big Boy Part 1:", bb1)
@@ -49,61 +52,25 @@ func main() {
 	fmt.Println("Big Boy Part 2:", bb2)
 }
 
-func Read() {
-	ReadInput()
-	ReadBigBoy()
-}
 
-func Parse() {
-	ParseInput()
-	ParseBigBoy()
-}
-// do all the stuff related to handling the input here
-
-func ParseInput() {
+func ParseInputs() {// return 2 parsed inputs
 
 }
 
-func ParseBigBoy() {
-
+func Parse(in []string) {//edit return type as needed
+	// return some kind of data structure once the input has been parsed
 }
 
-func Part1() (int, int64) {
-	return Part1AOC(), Part1BigBoy()
-}
-
-func Part1AOC() int {
+func Part1() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
 
-	fmt.Println("AOC Part 1:", time.Since(start))
-	return ans
+	return ans, time.Since(start)
 }
 
-func Part1BigBoy() int64 {
-	start := time.Now()
-	ans := int64(0)
-
-	fmt.Println("Big Boy Part 1:", time.Since(start))
-	return ans
-}
-
-func Part2() (int, int64) {
-	return Part2AOC(), Part2BigBoy()
-}
-
-func Part2AOC() int {
+func Part2() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
 
-	fmt.Println("AOC Part 2:", time.Since(start))
-	return ans
-}
-
-func Part2BigBoy() int64 {
-	start := time.Now()
-	ans := int64(0)
-
-	fmt.Println("Big Boy Part 2:", time.Since(start))
-	return ans
+	return ans, time.Since(start)
 }
