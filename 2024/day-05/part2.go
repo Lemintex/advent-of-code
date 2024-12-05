@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var input []string
+var orderingRules map[int]map[int]struct{}
+var pages [][]int
+var wrongOrderedPages [][]int
 
 func ReadFile() {
 	var err error
@@ -28,23 +32,97 @@ func Read(filename string) ([]string, error) {
 	in := strings.TrimSpace(string(s))
 
 	// depending on the grouping of the input we may want to change the seperator
-	return strings.Split(in, "\n"), nil
+	return strings.Split(in, "\n\n"), nil
 }
 
 func main() {
+	orderingRules = make(map[int]map[int]struct{})
 	ReadFile()
+	Parse()
 	answer, time := Solve()
 	fmt.Println("Answer:", answer)
 	fmt.Println("Time:", time)
 }
 
-func Parse(in []string) {//edit return type as needed
-	// return some kind of data structure once the input has been parsed
+func Parse() {
+	rules := strings.Split(input[0], "\n")
+	for _, r := range rules {
+		before, after, _ := strings.Cut(r, "|")
+		beforeInt, err := strconv.Atoi(before)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		afterInt, err := strconv.Atoi(after)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, exists := orderingRules[beforeInt]
+
+		if !exists {
+			orderingRules[beforeInt] = make(map[int]struct{})
+		}
+		orderingRules[beforeInt][afterInt] = struct{}{}
+	}
+
+	updates := strings.Split(input[1], "\n")
+	for i, u := range updates {
+		pages = append(pages, []int{})
+		pageStrings := strings.Split(u, ",")
+		for _, p := range pageStrings {
+			page, err := strconv.Atoi(p)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+			pages[i] = append(pages[i], page)
+		}
+	}
 }
 
 func Solve() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
+	for i := range pages {
+		if !isUpdateInOrder(i) {
+			wrongOrderedPages = append(wrongOrderedPages, pages[i])
+		}
+	}
+
+	for i := range wrongOrderedPages {
+		ans += sortWrongUpdate(i)
+	}
 
 	return ans, time.Since(start)
+}
+
+func isUpdateInOrder(i int) bool {
+	update := pages[i]
+	for i, p := range update {
+		for j := i+1; j < len(update); j++ {
+			q := update[j]
+			_, exists := orderingRules[q][p]
+			if exists {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func sortWrongUpdate(i int) int {
+	update := wrongOrderedPages[i]
+	for i := len(update) - 1; i >= 0; i-- {
+		for j := 0; j < i; j++ {
+			before, after := update[i], update[j]
+			_, exists := orderingRules[after][before]
+			if exists {
+				update[i], update[j] = after, before
+			}
+		}
+	}
+	return update[len(update) / 2]
 }
