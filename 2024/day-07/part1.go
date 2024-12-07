@@ -4,11 +4,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type calibration struct {
+	target   int
+	operands []int
+}
+
 var input []string
+var calibrations []calibration
 
 func ReadFile() {
 	var err error
@@ -33,18 +40,56 @@ func Read(filename string) ([]string, error) {
 
 func main() {
 	ReadFile()
+	Parse()
 	answer, time := Solve()
 	fmt.Println("Answer:", answer)
 	fmt.Println("Time:", time)
 }
 
-func Parse(in []string) {//edit return type as needed
-	// return some kind of data structure once the input has been parsed
+func Parse() {
+	for _, i := range input {
+		i = strings.TrimSpace(i)
+	}
+	for _, i := range input {
+		strTarget, operands, _ := strings.Cut(i, ": ")
+		target, err := strconv.Atoi(strTarget)
+		if err != nil {
+			log.Fatal(err)
+		}
+		strOperands := strings.Split(operands, " ")
+		ops := make([]int, 0)
+		for _, o := range strOperands {
+			op, err := strconv.Atoi(o)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ops = append(ops, op)
+		}
+		cal := calibration{
+			target:   target,
+			operands: ops,
+		}
+		calibrations = append(calibrations, cal)
+	}
 }
 
 func Solve() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
+	for _, cal := range calibrations {
+		if CanBeSolved(cal, 0, 0) {
+			ans += cal.target
+		}
+	}
 
 	return ans, time.Since(start)
+}
+
+func CanBeSolved(cal calibration, arrayIndex, num int) bool {
+	if arrayIndex == len(cal.operands) {
+		return num == cal.target
+	}
+	add := num + cal.operands[arrayIndex]
+	mul := num * cal.operands[arrayIndex]
+	return CanBeSolved(cal, arrayIndex + 1, add) || CanBeSolved(cal, arrayIndex + 1, mul)
 }
