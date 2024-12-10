@@ -9,15 +9,9 @@ import (
 	"time"
 )
 
-type file struct {
-	id      int
-	size    int
-	isSpace bool
-}
-
 var input string
-var drive []file
-var defragmentedDrive []file
+var drive []int
+var defragmentedDrive []int
 
 func ReadFile() {
 	var err error
@@ -46,102 +40,48 @@ func main() {
 	answer, time := Solve()
 	fmt.Println("Answer:", answer)
 	fmt.Println("Time:", time)
-	fmt.Print("\n")
-	Debug(drive)
-	fmt.Print("\n")
-	Debug(defragmentedDrive)
 }
 
 func Parse() {
-	i := 0
-	fileID := 0
-	for range len(input)/2 + 1 {
-		if i >= len(input) {
-			break
-		}
-		size, err := strconv.Atoi(string(input[i]))
+	id := 0
+	for i, c := range input {
+		n, err := strconv.Atoi(string(c))
 		if err != nil {
 			log.Fatal(err)
 		}
-		f := file{
-			id:      fileID,
-			size:    size,
-			isSpace: false,
+		if i%2 == 1 {
+			for range n {
+				drive = append(drive, -1)
+			}
+		} else {
+			for range n {
+				drive = append(drive, id)
+			}
+			id++
 		}
-		fileID++
-		drive = append(drive, f)
-		i++
-		if i >= len(input) {
-			break
-		}
-		size, err = strconv.Atoi(string(input[i]))
-		if err != nil {
-			log.Fatal(err)
-		}
-		s := file{
-			id:      -1,
-			size:    size,
-			isSpace: true,
-		}
-		drive = append(drive, s)
-		i++
 	}
+	fmt.Println(drive)
 }
 
 func Solve() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
 	l, r := 0, len(drive)-1
-	fmt.Println(drive)
-	for l < r {
-		MoveEndFileToFront(&l, &r)
-		fmt.Println(l, r)
+	for l <= r {
+		for drive[l] != -1 {
+			l++
+		}
+		for drive[r] == -1 {
+			r--
+		}
+		if l < r {
+			drive[l], drive[r] = drive[r], drive[l]
+		}
+	}
+	i := 0
+	for drive[i] != -1 {
+		ans += drive[i] * i
+		i++
 	}
 	return ans, time.Since(start)
-}
-
-func MoveEndFileToFront(l, r *int) {
-	left, right := drive[*l], drive[*r]
-	for !left.isSpace {
-		defragmentedDrive = append(defragmentedDrive, left)
-		*l++
-		left = drive[*l]
-	}
-	for right.isSpace {
-		*r--
-		right = drive[*r]
-	}
-	fmt.Println(left, right, *l, *r)
-	if drive[*l].size == drive[*r].size {
-		fmt.Println("==", right)
-		defragmentedDrive = append(defragmentedDrive, right)
-		*l++
-		*r--
-	} else if left.size > right.size {
-		left.size -= right.size
-		fmt.Println(">", right)
-		defragmentedDrive = append(defragmentedDrive, right)
-		*r--
-	} else {
-		for right.size > 0 {
-		fmt.Println(" ", right)
-			right.size -= left.size
-			defragmentedDrive = append(defragmentedDrive, right)
-			*l++
-			left = drive[*l]
-		}
-	}
-}
-
-func Debug(d []file) {
-	fmt.Println("=============")
-	fmt.Println(d)
-	for _, f := range d {
-		fmt.Println(f)
-		if f.isSpace {
-			fmt.Print(strings.Repeat(".", f.size))
-		} else {
-			fmt.Print(strings.Repeat(strconv.Itoa(f.id), f.size))
-		}
-	}
 }
