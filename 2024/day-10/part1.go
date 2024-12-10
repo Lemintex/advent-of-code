@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type pos struct {
+	r int
+	c int
+}
+
 var input []string
+var trailHeads []pos
+
 
 func ReadFile() {
 	var err error
@@ -33,18 +41,69 @@ func Read(filename string) ([]string, error) {
 
 func main() {
 	ReadFile()
+	Parse()
 	answer, time := Solve()
 	fmt.Println("Answer:", answer)
 	fmt.Println("Time:", time)
 }
 
-func Parse(in []string) {//edit return type as needed
-	// return some kind of data structure once the input has been parsed
+func Parse() {
+	for r, row := range input {
+		for c, col := range row {
+			if col == '0' {
+				pos := pos{
+					r: r,
+					c: c,
+				}
+				trailHeads = append(trailHeads, pos)
+			}
+		}
+	}
 }
 
 func Solve() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
 
+	for _, p := range trailHeads {
+		ans += FindTrailHeadScore(p)
+	}
 	return ans, time.Since(start)
+}
+
+func FindTrailHeadScore(p pos) int {
+	peaks := make(map[pos]struct{})
+	score := 0
+	dirs := [4]pos{pos{r: 0, c: 1}, pos{r: 0, c: -1}, pos{r: 1, c: 0}, pos{r: -1, c: 0}}
+	var goThroughTrail func(int, pos)
+	goThroughTrail = func(n int, position pos) {
+		if n == 9 {
+			peaks[position] = struct{}{}
+			score++
+			return
+		}
+		for _, d := range dirs {
+			r, c := position.r+d.r, position.c+d.c
+			if r < 0 || r >= len(input) || c < 0 || c >= len(input[0]) {
+				continue
+			}
+			if input[r][c] == '.' {
+				continue
+			}
+			h, err := strconv.Atoi(string(input[r][c]))
+			if err != nil {
+				log.Fatal(err)
+			}
+			if h != n + 1 {
+				continue
+			}
+			newPos := pos{
+				r: r,
+				c: c,
+			}
+			goThroughTrail(n+1, newPos)
+		}
+	}
+	goThroughTrail(0, p)
+	return len(peaks)
 }
