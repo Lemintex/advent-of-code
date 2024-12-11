@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var input []string
+var stones []int
 
 func ReadFile() {
 	var err error
@@ -28,23 +30,67 @@ func Read(filename string) ([]string, error) {
 	in := strings.TrimSpace(string(s))
 
 	// depending on the grouping of the input we may want to change the seperator
-	return strings.Split(in, "\n"), nil
+	return strings.Split(in, " "), nil
 }
 
 func main() {
 	ReadFile()
+	Parse()
 	answer, time := Solve()
 	fmt.Println("Answer:", answer)
 	fmt.Println("Time:", time)
 }
 
-func Parse(in []string) {//edit return type as needed
-	// return some kind of data structure once the input has been parsed
+func Parse() {
+	for _, s := range input {
+		stone, err := strconv.Atoi(s)
+		if err != nil {
+			log.Fatal(err)
+		}
+		stones = append(stones, stone)
+	}
 }
 
 func Solve() (int, time.Duration) {
 	start := time.Now()
 	ans := 0
-
+	blinks := 25
+	for range blinks {
+		changeStones()
+	}
+	ans = len(stones)
 	return ans, time.Since(start)
+}
+
+func changeStones() {
+	var newStones []int
+	newStones = make([]int, 0)
+	for _, s := range stones {
+		stone := s
+		if s == 0 {
+			stone = 1
+			newStones = append(newStones, stone)
+			continue
+		}
+		str := strconv.Itoa(s)
+		if len(str)%2 == 0 {
+			str := strconv.Itoa(stone)
+			s1, s2 := str[:len(str)/2], str[len(str)/2:]
+			stone1, err := strconv.Atoi(s1)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			stone2, err := strconv.Atoi(s2)
+			if err != nil {
+				log.Fatal(err)
+			}
+			newStones = append(newStones, stone1)
+			newStones = append(newStones, stone2)
+			continue
+		}
+		stone *= 2024
+		newStones = append(newStones, stone)
+	}
+	stones = newStones
 }
