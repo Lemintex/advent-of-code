@@ -13,8 +13,12 @@ type pos struct {
 	c int
 }
 
+type cornerPos struct {
+	r float64
+	c float64
+}
 type edge struct {
-	p pos
+	p   pos
 	dir byte
 }
 
@@ -73,35 +77,85 @@ func Solve() (int, time.Duration) {
 }
 
 func floodFill(init pos) (int, int) {
-	edgeMap := make(map[pos]int)
+	region := make([]pos, 0)
+	region = append(region, init)
 	area, perimeter := 1, 0
 	plant := input[init.r][init.c]
-	var directions [8]pos
-	directions = [8]pos{pos{r: 1, c: 0}, pos{r: -1, c: 0}, pos{r: 0, c: 1}, pos{r: 0, c: -1}, pos{r: 1, c: 1}, pos{r: 1,c: -1}, pos{r: -1, c: 1},pos{r: -1, c: -1}}
+	var directions [4]pos
+	directions = [4]pos{pos{r: 1, c: 0}, pos{r: -1, c: 0}, pos{r: 0, c: 1}, pos{r: 0, c: -1}}
 	var flood func(pos)
 	flood = func(p pos) {
 		for _, d := range directions {
 			r, c := p.r+d.r, p.c+d.c
 			newPos := pos{r: r, c: c}
 			if r < 0 || r >= len(input) || c < 0 || c >= len(input[0]) {
-				edgeMap[p]++
 				perimeter++
 				continue
 			}
 			_, exists := visited[newPos]
 			if plant != input[r][c] {
 				perimeter++
-				edgeMap[p]++
 			} else if !exists {
 				area++
 				visited[newPos] = struct{}{}
+				region = append(region, newPos)
 				flood(newPos)
 			}
 		}
 	}
 	flood(init)
+	perimeter = countCorners(region)
 	return area, perimeter
 }
-func checkCorners(edges, diags int) int {
+
+func countCorners(region []pos) int {
 	corners := 0
+	cornerMap := make(map[cornerPos]struct{})
+	regionMap := make(map[pos]struct{})
+	candidates := make([]cornerPos, 0)
+	dirs := [4]cornerPos{cornerPos{0.5, 0.5}, cornerPos{0.5, -0.5}, cornerPos{-0.5, -0.5}, cornerPos{-0.5, 0.5}}
+	for _, p := range region {
+		regionMap[p] = struct{}{}
+		for _, d := range dirs {
+			c := cornerPos{float64(p.r) + d.r, float64(p.c) + d.c}
+			_, exists := cornerMap[c]
+			if exists {
+				continue
+			}
+			cornerMap[c] = struct{}{}
+			candidates = append(candidates, c)
+		}
+	}
+
+	var config [][]bool
+	for i, candidate := range candidates {
+		config = append(config, make([]bool, 0))
+		r, c := candidate.r,  candidate.c
+		for _, d := range dirs {
+			er, ec := r - d.r, c - d.c
+			pos := pos{int(er), int(ec)}
+			_, exists := regionMap[pos]
+			config[i] = append(config[i], exists)
+		}
+	}
+	for _, c := range config {
+		truecount, falseCount := 0, 0
+		for _, i := range c {
+			if i {
+				truecount++
+			} else {
+				falseCount++
+			}
+		}
+		if truecount == 1 || falseCount == 1 {
+			corners++
+			continue
+		}
+		if truecount == 2 && falseCount == 2{
+			if c[0] == c[2] && c[1] == c[3] {
+				corners+=2
+			}
+		}
+	}
+	return corners
 }
